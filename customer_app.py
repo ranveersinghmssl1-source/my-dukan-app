@@ -7,7 +7,7 @@ st.set_page_config(page_title="Grahak Khata Portal", page_icon="🔐", layout="w
 
 def run_query(query, params=(), fetch=False):
     # Same database use karega jo dukan ka main software use kar raha hai
-    conn = sqlite3.connect('dukan_final_perfect_v7.db')
+    conn = sqlite3.connect('dukan_ultimate_v1.db')
     cursor = conn.cursor()
     try:
         cursor.execute(query, params)
