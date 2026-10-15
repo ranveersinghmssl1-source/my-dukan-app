@@ -10,10 +10,11 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PASSWORD = "1234"  # <── Apna password agar alag ho toh theek kar lena
+DB_PASSWORD = "1234"  # <── Apna database password check kar ke likhein
 DB_PORT = "5432"
 
 def init_db():
+    """Online Database me tables initialize karna"""
     try:
         conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT)
         cursor = conn.cursor()
@@ -57,6 +58,12 @@ def run_query(query, params=(), fetch=False):
         conn.close()
         return data
     except Exception as e:
+        # If transaction fails, rollback to avoid freezing the list view
+        try:
+            conn.rollback()
+            conn.close()
+        except:
+            pass
         return None
 
 # ─── MASTER PASSWORD ───
@@ -202,7 +209,9 @@ else:
             data = run_query("SELECT barcode, name, supplier, unit_type, weight_kg, price, stock FROM products", fetch=True)
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
-    # ─── 4. CUSTOMER SCREEN ───
+
+    # ─── 4. CUSTOMER SCREEN (FULLY SYNCHRONIZED FIX) ───
+
     elif current_form == "customers":
         st.subheader("Customer Database" if lang_choice == "English" else "ग्राहक बहीखाता रजिस्टर")
         
