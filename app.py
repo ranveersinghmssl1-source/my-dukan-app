@@ -6,14 +6,15 @@ from datetime import datetime
 # ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
-# ─── ONLINE CLOUD SQL CONNECTION (CORRECTED HOST) ───
+# ─── ONLINE CLOUD SQL CONNECTION ───
 DB_HOST = "://supabase.com"
 DB_NAME = "postgres"
 DB_USER = "postgres.enzhtmepoqfyvxenamsx"
-DB_PASSWORD = "1234"  # <── Agar password alag hai toh badal dena
+DB_PASSWORD = "1234"  # <── Agar aapka database password alag hai toh yahan sahi likhein
 DB_PORT = "6543"
 
 def init_db():
+    """Online Database me compatible tables banana"""
     try:
         conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT)
         cursor = conn.cursor()
@@ -119,14 +120,14 @@ if current_form == "dashboard":
         col2.metric("💵 Cash Received", f"₹{cash_sales:,.2f}")
         col3.metric("📉 Market Udhaar", f"₹{udhaar_sales:,.2f}")
 
-# ─── 2. BILLING SCREEN ───
+# ─── 2. BILLING SCREEN (FIXED COLUMNS BUG) ───
 elif current_form == "billing":
     if check_lock():
         st.subheader("Fast Billing Counter")
         cust_list = run_query("SELECT name, phone FROM customers", fetch=True)
         cust_options = [f"{c[0]} ({c[1]})" for c in cust_list] if cust_list else []
         cust_options.insert(0, "Walk-in Customer")
-        selected_cust_info = st.selectbox("Customer / g ग्राहक चुनें", cust_options)
+        selected_cust_info = st.selectbox("Customer / ग्राहक चुनें", cust_options)
         
         if " (" in selected_cust_info:
             parts = selected_cust_info.split(" (")
@@ -136,12 +137,13 @@ elif current_form == "billing":
             c_name = "Walk-in"
             c_phone = "0000000000"
 
-        col_input, col_btn = st.columns()
+        # Fixed: Added exact sizing inside columns to avoid layout crashes
+        col_input, col_btn = st.columns([4, 1])
         with col_input:
             barcode_input = st.text_input("🔍 SCAN BARCODE HERE", key="bill_barcode").strip()
         with col_btn:
             st.write(""); st.write("")
-            enter_pressed = st.button("↩️ Enter Item")
+            enter_pressed = st.button("↩️ Enter")
 
         if "active_prod" not in st.session_state:
             st.session_state.active_prod = None
@@ -206,7 +208,3 @@ elif current_form == "inventory":
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
 
-# ─── 4. CUSTOMER SCREEN ───
-elif current_form == "customers":
-    if check_lock():
-        st.subheader("Customer Database")
