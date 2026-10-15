@@ -10,7 +10,9 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 DB_HOST = "://supabase.com"
 DB_NAME = "postgres"
 DB_USER = "postgres.enzhtmepoqfyvxenamsx"
-DB_PASSWORD = "1234"  # <── Sirf ek baar password brackets me hona chahiye
+DB_PASSWORD = "1234"  # <── Agar aapka password 1234 hai toh yahan sahi likhein
+DB_PORT = "6543"
+
 
 DB_PORT = "6543"
 
