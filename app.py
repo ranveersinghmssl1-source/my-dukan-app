@@ -10,7 +10,7 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PASSWORD = "1234"  # <── Yahan apna database password check kar ke likhein
+DB_PASSWORD = "1234"  # <── Apna database password check kar ke likhein
 DB_PORT = "5432"
 
 def init_db():
@@ -125,8 +125,8 @@ else:
         
         if " (" in selected_cust_info:
             parts = selected_cust_info.split(" (")
-            c_name = parts
-            c_phone = parts.replace(")", "")
+            c_name = parts[0]
+            c_phone = parts[1].replace(")", "")
         else:
             c_name = "Walk-in"
             c_phone = "0000000000"
@@ -144,7 +144,7 @@ else:
         if barcode_input and (enter_pressed or barcode_input != ""):
             res = run_query("SELECT product_id, name, price, stock, unit_type, weight_kg FROM products WHERE barcode = %s", (barcode_input,), fetch=True)
             if res and len(res) > 0:
-                st.session_state.active_prod = res
+                st.session_state.active_prod = res[0]
             else:
                 st.session_state.active_prod = None
                 st.error("Barcode Not Found!")
@@ -155,7 +155,7 @@ else:
             st.warning("Inventory empty! / स्टॉक खाली है।")
         else:
             if not st.session_state.active_prod:
-                prod_dict = {p: p for p in prod_list}
+                prod_dict = {p[1]: p for p in prod_list}
                 search_prod = st.selectbox("Search/Select Product Name", list(prod_dict.keys()))
                 st.session_state.active_prod = prod_dict[search_prod]
                 
@@ -203,9 +203,9 @@ else:
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
 
-    # ─── 4. CUSTOMER SCREEN (LINEAR INDEPENDENT LAYOUT) ───
+    # ─── 4. CUSTOMER SCREEN (ROBUST FORM WRAPPER FIX) ───
     elif current_form == "customers":
         st.subheader("Customer Database")
-        st.write("### ➕ Register New Customer / नया ग्राहक जोड़ें")
         
-        # Simple inputs outside any cards to prevent system hiding glitches
+        # Enclosing both inputs and buttons within an unbreakable explicit Form container
+        with st.form("add_customer_clean_form_v1", clear_on_submit=True):
