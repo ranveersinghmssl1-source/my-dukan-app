@@ -10,7 +10,7 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PASSWORD = "1234"  # <── Apna database password check kar ke likhein
+DB_PASSWORD = "1234"  # <── Yahan apna database password check kar ke likhein
 DB_PORT = "5432"
 
 def init_db():
@@ -102,13 +102,13 @@ else:
     if current_form == "dashboard":
         st.subheader("Dukan Live Summary & Reports" if lang_choice == "English" else "दुकान की लाइव कमाई और रिपोर्ट्स")
         total_sales_raw = run_query("SELECT SUM(total_amount) FROM bills", fetch=True)
-        total_sales = total_sales_raw[0][0] if total_sales_raw and total_sales_raw[0][0] is not None else 0.0
+        total_sales = total_sales_raw if total_sales_raw and total_sales_raw is not None else 0.0
         
         cash_sales_raw = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode = 'Cash'", fetch=True)
-        cash_sales = cash_sales_raw[0][0] if cash_sales_raw and cash_sales_raw[0][0] is not None else 0.0
+        cash_sales = cash_sales_raw if cash_sales_raw and cash_sales_raw is not None else 0.0
         
         udhaar_sales_raw = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode = 'Udhaar (Balance)'", fetch=True)
-        udhaar_sales = udhaar_sales_raw[0][0] if udhaar_sales_raw and udhaar_sales_raw[0][0] is not None else 0.0
+        udhaar_sales = udhaar_sales_raw if udhaar_sales_raw and udhaar_sales_raw is not None else 0.0
         
         col1, col2, col3 = st.columns(3)
         col1.metric("💰 Total Sales", f"₹{total_sales:,.2f}")
@@ -117,16 +117,16 @@ else:
 
     # ─── 2. BILLING SCREEN ───
     elif current_form == "billing":
-        st.subheader("Fast Billing Counter" if lang_choice == "English" else "फ़ास्ट बिलिंग काउंटर")
+        st.subheader("Fast Billing Counter")
         cust_list = run_query("SELECT name, phone FROM customers", fetch=True)
-        cust_options = [f"{c[0]} ({c[1]})" for c in cust_list] if cust_list else []
+        cust_options = [f"{c} ({c})" for c in cust_list] if cust_list else []
         cust_options.insert(0, "Walk-in Customer")
         selected_cust_info = st.selectbox("Customer / ग्राहक चुनें", cust_options)
         
         if " (" in selected_cust_info:
             parts = selected_cust_info.split(" (")
-            c_name = parts[0]
-            c_phone = parts[1].replace(")", "")
+            c_name = parts
+            c_phone = parts.replace(")", "")
         else:
             c_name = "Walk-in"
             c_phone = "0000000000"
@@ -144,7 +144,7 @@ else:
         if barcode_input and (enter_pressed or barcode_input != ""):
             res = run_query("SELECT product_id, name, price, stock, unit_type, weight_kg FROM products WHERE barcode = %s", (barcode_input,), fetch=True)
             if res and len(res) > 0:
-                st.session_state.active_prod = res[0]
+                st.session_state.active_prod = res
             else:
                 st.session_state.active_prod = None
                 st.error("Barcode Not Found!")
@@ -155,7 +155,7 @@ else:
             st.warning("Inventory empty! / स्टॉक खाली है।")
         else:
             if not st.session_state.active_prod:
-                prod_dict = {p[1]: p for p in prod_list}
+                prod_dict = {p: p for p in prod_list}
                 search_prod = st.selectbox("Search/Select Product Name", list(prod_dict.keys()))
                 st.session_state.active_prod = prod_dict[search_prod]
                 
@@ -182,10 +182,10 @@ else:
 
     # ─── 3. INVENTORY SCREEN ───
     elif current_form == "inventory":
-        st.subheader("Inventory Stock Room" if lang_choice == "English" else "इन्वेंट्री स्टॉक गोदाम")
+        st.subheader("Inventory Stock Room")
         tab1, tab2 = st.tabs(["➕ Add Item", "📋 Stock Book"])
         with tab1:
-            with st.form("inventory_form_clean", clear_on_submit=True):
+            with st.form("inventory_form", clear_on_submit=True):
                 p_barcode = st.text_input("Barcode Number")
                 p_name = st.text_input("Product Name")
                 p_supplier = st.text_input("Supplier Name")
@@ -201,8 +201,10 @@ else:
         with tab2:
             data = run_query("SELECT barcode, name, supplier, unit_type, weight_kg, price, stock FROM products", fetch=True)
             if data:
-                df_prod = pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"])
-                st.dataframe(df_prod, use_container_width=True)
+                st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
 
-    # ─── 4. CUSTOMER SCREEN (FULLY STABLE & VISIBLE LAYOUT) ───
+    # ─── 4. CUSTOMER SCREEN (FULLY CLEANED INDENTATION) ───
     elif current_form == "customers":
+        st.subheader("Customer Database" if lang_choice == "English" else "ग्राहक बहीखाता रजिस्टर")
+        with st.form("add_cust_form_fixed", clear_on_submit=True):
+            c_name = st.text_input("Customer Name / ग्राहक का नाम")
