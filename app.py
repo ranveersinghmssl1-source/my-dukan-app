@@ -10,7 +10,7 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PASSWORD = "1234"  # <── Yahan apna database password check kar ke likhein
+DB_PASSWORD = "1234"  # <── Apna database password check kar ke likhein
 DB_PORT = "5432"
 
 def init_db():
@@ -174,6 +174,9 @@ elif current_form == "billing":
             pay_mode = st.radio("Payment Mode", ["Cash", "Udhaar (Balance)"], horizontal=True)
             disabled_btn = True if pay_mode == "Udhaar (Balance)" and c_name == "Walk-in" else False
             
+            if disabled_btn:
+                st.warning("⚠️ Registered Customer needed for Balance option.")
+                
             if st.button("🖨️ Generate Bill", disabled=disabled_btn):
                 run_query("UPDATE products SET stock = %s WHERE product_id = %s", (available_stock - qty, p_id))
                 run_query("INSERT INTO bills (customer_name, customer_phone, total_amount, payment_mode, bill_date) VALUES (%s, %s, %s, %s, %s)", 
@@ -209,5 +212,3 @@ elif current_form == "inventory":
 # ─── 4. CUSTOMER SCREEN ───
 elif current_form == "customers":
     if check_lock():
-        st.subheader("Customer Database")
-        with st.form("add_cust_form", clear_on_submit=True):
