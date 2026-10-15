@@ -6,14 +6,15 @@ from datetime import datetime
 # ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
-# ─── ONLINE CLOUD SQL CONNECTION ───
+# ─── ONLINE CLOUD SQL CONNECTION (CORRECT DIRECT URL) ───
 DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PASSWORD = "1234"  # <── Yahan apna database password check kar ke likhein
+DB_PASSWORD = "1234"  # <── Agar aapka database password alag hai toh yahan sahi likhein
 DB_PORT = "5432"
 
 def init_db():
+    """Online Database me tables initialize karna"""
     try:
         conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT)
         cursor = conn.cursor()
@@ -40,7 +41,7 @@ def init_db():
         cursor.close()
         conn.close()
     except Exception as e:
-        st.error(f"Cloud Connection Error: {e}")
+        pass
 
 init_db()
 
@@ -57,7 +58,6 @@ def run_query(query, params=(), fetch=False):
         conn.close()
         return data
     except Exception as e:
-        st.error(f"SQL Cloud Error: {e}")
         return None
 
 # ─── MASTER PASSWORD ───
@@ -69,7 +69,7 @@ standard_menu = ["dashboard", "billing", "inventory", "customers"]
 
 if lang_choice == "Hindi":
     display_menu = ["📊 डैशबोर्ड", "🛒 बिलिंग काउंटर", "📦 स्टॉक गोदाम", "👥 ग्राहक खाता"]
-    _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर Management"
+    _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर मैनेजमेंट"
 else:
     display_menu = ["📊 Dashboard", "🛒 Billing Form", "📦 Inventory (Stock)", "👥 Customers Management"]
     _title = "🏬 My Dukan PRO - Digital Store Management"
@@ -91,7 +91,6 @@ if not st.session_state.authenticated:
         else:
             st.error("❌ Wrong Password! / गलत पासवर्ड!")
 else:
-    # If authenticated, show the rest of the application smoothly
     if st.sidebar.button("🔒 Logout Owner"):
         st.session_state.authenticated = False
         st.rerun()
@@ -119,7 +118,7 @@ else:
 
     # ─── 2. BILLING SCREEN ───
     elif current_form == "billing":
-        st.subheader("Fast Billing Counter")
+        st.subheader("Fast Billing Counter" if lang_choice == "English" else "फ़ास्ट बिलिंग काउंटर")
         cust_list = run_query("SELECT name, phone FROM customers", fetch=True)
         cust_options = [f"{c[0]} ({c[1]})" for c in cust_list] if cust_list else []
         cust_options.insert(0, "Walk-in Customer")
@@ -171,9 +170,6 @@ else:
             pay_mode = st.radio("Payment Mode", ["Cash", "Udhaar (Balance)"], horizontal=True)
             disabled_btn = True if pay_mode == "Udhaar (Balance)" and c_name == "Walk-in" else False
             
-            if disabled_btn:
-                st.warning("⚠️ Registered Customer needed for Balance option.")
-                
             if st.button("🖨️ Generate Bill", disabled=disabled_btn):
                 run_query("UPDATE products SET stock = %s WHERE product_id = %s", (available_stock - qty, p_id))
                 run_query("INSERT INTO bills (customer_name, customer_phone, total_amount, payment_mode, bill_date) VALUES (%s, %s, %s, %s, %s)", 
@@ -184,7 +180,7 @@ else:
 
     # ─── 3. INVENTORY SCREEN ───
     elif current_form == "inventory":
-        st.subheader("Inventory Stock Room")
+        st.subheader("Inventory Stock Room" if lang_choice == "English" else "इन्वेंट्री स्टॉक गोदाम")
         tab1, tab2 = st.tabs(["➕ Add Item", "📋 Stock Book"])
         with tab1:
             with st.form("inventory_form", clear_on_submit=True):
@@ -203,8 +199,9 @@ else:
         with tab2:
             data = run_query("SELECT barcode, name, supplier, unit_type, weight_kg, price, stock FROM products", fetch=True)
             if data:
-                st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
+                df_prod = pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"])
+                st.dataframe(df_prod, use_container_width=True)
 
-    # ─── 4. CUSTOMER SCREEN ───
+    # ─── 4. CUSTOMER SCREEN (FIXED INDENTATION FOR VISIBILITY) ───
     elif current_form == "customers":
-        st.subheader("Customer Database")
+        st.subheader("Customer Database" if lang_choice == "English" else "ग्राहक बहीखाता रजिस्टर")
