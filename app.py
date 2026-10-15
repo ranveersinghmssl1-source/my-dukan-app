@@ -206,4 +206,6 @@ else:
     elif current_form == "customers":
         st.subheader("Customer Database")
         st.write("##### ➕ Register New Customer / नया ग्राहक जोड़ें")
+        c_name = st.text_input("Customer Name / ग्राहक का नाम")
+        c_phone = st.text_input("Mobile Number / मोबाइल नंबर")
         
