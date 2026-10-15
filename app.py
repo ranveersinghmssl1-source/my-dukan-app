@@ -202,12 +202,29 @@ else:
             data = run_query("SELECT barcode, name, supplier, unit_type, weight_kg, price, stock FROM products", fetch=True)
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
-# ─── 4. CUSTOMER SCREEN (100% FIXED NO NESTING BLOCKS) ───
+    # ─── 4. CUSTOMER SCREEN ───
     elif current_form == "customers":
-        st.subheader("Customer Database")
-        st.write("##### ➕ Register New Customer / नया ग्राहक जोड़ें")
-        c_name = st.text_input("Customer Name / ग्राहक का नाम")
-        c_phone = st.text_input("Mobile Number / मोबाइल नंबर")
-         key="cust_name_final_complete")
+        st.subheader("Customer Database" if lang_choice == "English" else "ग्राहक बहीखाता रजिस्टर")
+        
+        with st.form("add_cust_form_new", clear_on_submit=True):
+            c_name = st.text_input("Customer Name / ग्राहक का नाम")
+            c_phone = st.text_input("Mobile Number / मोबाइल नंबर")
+            submit_btn = st.form_submit_button("Register Customer / ग्राहक सुरक्षित करें")
+            
+            if submit_btn:
+                if c_name and c_phone:
+                    # Fixed: Changed (?, ?) to (%s, %s) for Supabase PostgreSQL compatibility
+                    run_query("INSERT INTO customers (name, phone) VALUES (%s, %s)", (c_name, c_phone))
+                    st.success("Registered successfully! / ग्राहक सफलतापूर्वक जुड़ गया!")
+                    st.rerun()
+                else:
+                    st.error("Please fill both boxes! / कृपया दोनों बक्से भरें!")
+        
+        st.markdown("---")
+        st.markdown("### Registered Customers List / पंजीकृत ग्राहकों की सूची")
+        c_data = run_query("SELECT name, phone FROM customers", fetch=True)
+        if c_data:
+            st.dataframe(pd.DataFrame(c_data, columns=["Naam", "Mobile Number"]), use_container_width=True)
+
       
         
