@@ -10,7 +10,7 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PASSWORD = "1234"  # <── Apna database password check kar ke likhein
+DB_PASSWORD = "1234"  # <── Yahan apna database password check kar ke likhein
 DB_PORT = "5432"
 
 def init_db():
@@ -77,33 +77,31 @@ else:
 st.title(_title)
 st.markdown("---")
 
-choice_display = st.sidebar.selectbox("Menu Navigation / मेनू चुनें", display_menu)
-choice_idx = display_menu.index(choice_display)
-current_form = standard_menu[choice_idx]
+# ─── SECURITY GLOBAL LOCK CHECK ───
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
-def check_lock():
-    if "authenticated" not in st.session_state:
-        st.session_state.authenticated = False
-    if not st.session_state.authenticated:
-        st.subheader("🔒 Owner Lock Security / सुरक्षा लॉक")
-        entered_pass = st.text_input("🔑 Enter Dukan Password / पासवर्ड दर्ज करें", type="password")
-        if st.button("Unlock / खोलें"):
-            if entered_pass == MASTER_PASSWORD:
-                st.session_state.authenticated = True
-                st.rerun()
-            else:
-                st.error("❌ Wrong Password! / गलत पासवर्ड!")
-        return False
-    return True
-
-if "authenticated" in st.session_state and st.session_state.authenticated:
+if not st.session_state.authenticated:
+    st.subheader("🔒 Owner Lock Security / सुरक्षा लॉक")
+    entered_pass = st.text_input("🔑 Enter Dukan Password / पासवर्ड दर्ज करें", type="password")
+    if st.button("Unlock / खोलें"):
+        if entered_pass == MASTER_PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("❌ Wrong Password! / गलत पासवर्ड!")
+else:
+    # If authenticated, show the rest of the application smoothly
     if st.sidebar.button("🔒 Logout Owner"):
         st.session_state.authenticated = False
         st.rerun()
 
-# ─── 1. DASHBOARD SCREEN ───
-if current_form == "dashboard":
-    if check_lock():
+    choice_display = st.sidebar.selectbox("Menu Navigation / मेनू चुनें", display_menu)
+    choice_idx = display_menu.index(choice_display)
+    current_form = standard_menu[choice_idx]
+
+    # ─── 1. DASHBOARD SCREEN ───
+    if current_form == "dashboard":
         st.subheader("Dukan Live Summary & Reports" if lang_choice == "English" else "दुकान की लाइव कमाई और रिपोर्ट्स")
         total_sales_raw = run_query("SELECT SUM(total_amount) FROM bills", fetch=True)
         total_sales = total_sales_raw[0][0] if total_sales_raw and total_sales_raw[0][0] is not None else 0.0
@@ -119,9 +117,8 @@ if current_form == "dashboard":
         col2.metric("💵 Cash Received", f"₹{cash_sales:,.2f}")
         col3.metric("📉 Market Udhaar", f"₹{udhaar_sales:,.2f}")
 
-# ─── 2. BILLING SCREEN ───
-elif current_form == "billing":
-    if check_lock():
+    # ─── 2. BILLING SCREEN ───
+    elif current_form == "billing":
         st.subheader("Fast Billing Counter")
         cust_list = run_query("SELECT name, phone FROM customers", fetch=True)
         cust_options = [f"{c[0]} ({c[1]})" for c in cust_list] if cust_list else []
@@ -185,9 +182,8 @@ elif current_form == "billing":
                 st.session_state.active_prod = None
                 st.balloons()
 
-# ─── 3. INVENTORY SCREEN ───
-elif current_form == "inventory":
-    if check_lock():
+    # ─── 3. INVENTORY SCREEN ───
+    elif current_form == "inventory":
         st.subheader("Inventory Stock Room")
         tab1, tab2 = st.tabs(["➕ Add Item", "📋 Stock Book"])
         with tab1:
@@ -209,6 +205,6 @@ elif current_form == "inventory":
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
 
-# ─── 4. CUSTOMER SCREEN ───
-elif current_form == "customers":
-    if check_lock():
+    # ─── 4. CUSTOMER SCREEN ───
+    elif current_form == "customers":
+        st.subheader("Customer Database")
