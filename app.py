@@ -203,9 +203,9 @@ else:
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
 
-    # ─── 4. CUSTOMER SCREEN ───
+    # ─── 4. CUSTOMER SCREEN (FIXED BUTTON POSITION WITH SPACING) ───
     elif current_form == "customers":
         st.subheader("Customer Database")
-        with st.form("add_cust_form_ultimate", clear_on_submit=True):
-            c_name = st.text_input("Customer Name / ग्राहक का नाम")
-            c_phone = st.text_input("Mobile Number / मोबाइल नंबर")
+        
+        # Split fields into normal text boxes instead of a compressed grid form
+        c_name = st.text_input("Customer Name / ग्राहक का नाम", key="input_cust_name")
