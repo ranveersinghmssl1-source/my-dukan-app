@@ -6,15 +6,14 @@ from datetime import datetime
 # ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
-# ─── ONLINE CLOUD SQL CONNECTION ───
-DB_HOST = "://supabase.com"
+# ─── ONLINE CLOUD SQL CONNECTION (DIRECT SAFE HOST) ───
+DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
-DB_USER = "postgres.enzhtmepoqfyvxenamsx"
-DB_PASSWORD = "1234"  # <── Agar aapka database password alag hai toh yahan sahi likhein
-DB_PORT = "6543"
+DB_USER = "postgres"
+DB_PASSWORD = "YOUR_PASSWORD"  # <── Yahan apna database password likhein
+DB_PORT = "5432"
 
 def init_db():
-    """Online Database me compatible tables banana"""
     try:
         conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT)
         cursor = conn.cursor()
@@ -120,7 +119,7 @@ if current_form == "dashboard":
         col2.metric("💵 Cash Received", f"₹{cash_sales:,.2f}")
         col3.metric("📉 Market Udhaar", f"₹{udhaar_sales:,.2f}")
 
-# ─── 2. BILLING SCREEN (FIXED COLUMNS BUG) ───
+# ─── 2. BILLING SCREEN ───
 elif current_form == "billing":
     if check_lock():
         st.subheader("Fast Billing Counter")
@@ -137,8 +136,7 @@ elif current_form == "billing":
             c_name = "Walk-in"
             c_phone = "0000000000"
 
-        # Fixed: Added exact sizing inside columns to avoid layout crashes
-        col_input, col_btn = st.columns([4, 1])
+        col_input, col_btn = st.columns(2)
         with col_input:
             barcode_input = st.text_input("🔍 SCAN BARCODE HERE", key="bill_barcode").strip()
         with col_btn:
@@ -208,3 +206,8 @@ elif current_form == "inventory":
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
 
+# ─── 4. CUSTOMER SCREEN ───
+elif current_form == "customers":
+    if check_lock():
+        st.subheader("Customer Database")
+        with st.form("add_cust_form", clear_on_submit=True):
