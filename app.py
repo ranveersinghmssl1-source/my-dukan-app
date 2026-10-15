@@ -10,7 +10,7 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PASSWORD = "1234"  # <── Apna database password check kar ke likhein
+DB_PASSWORD = "1234"  # <── Apna password agar alag ho toh theek kar lena
 DB_PORT = "5432"
 
 def init_db():
@@ -102,13 +102,13 @@ else:
     if current_form == "dashboard":
         st.subheader("Dukan Live Summary & Reports" if lang_choice == "English" else "दुकान की लाइव कमाई और रिपोर्ट्स")
         total_sales_raw = run_query("SELECT SUM(total_amount) FROM bills", fetch=True)
-        total_sales = total_sales_raw if total_sales_raw and total_sales_raw is not None else 0.0
+        total_sales = total_sales_raw[0][0] if total_sales_raw and total_sales_raw[0][0] is not None else 0.0
         
         cash_sales_raw = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode = 'Cash'", fetch=True)
-        cash_sales = cash_sales_raw if cash_sales_raw and cash_sales_raw is not None else 0.0
+        cash_sales = cash_sales_raw[0][0] if cash_sales_raw and cash_sales_raw[0][0] is not None else 0.0
         
         udhaar_sales_raw = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode = 'Udhaar (Balance)'", fetch=True)
-        udhaar_sales = udhaar_sales_raw if udhaar_sales_raw and udhaar_sales_raw is not None else 0.0
+        udhaar_sales = udhaar_sales_raw[0][0] if udhaar_sales_raw and udhaar_sales_raw[0][0] is not None else 0.0
         
         col1, col2, col3 = st.columns(3)
         col1.metric("💰 Total Sales", f"₹{total_sales:,.2f}")
@@ -119,7 +119,7 @@ else:
     elif current_form == "billing":
         st.subheader("Fast Billing Counter")
         cust_list = run_query("SELECT name, phone FROM customers", fetch=True)
-        cust_options = [f"{c} ({c})" for c in cust_list] if cust_list else []
+        cust_options = [f"{c[0]} ({c[1]})" for c in cust_list] if cust_list else []
         cust_options.insert(0, "Walk-in Customer")
         selected_cust_info = st.selectbox("Customer / ग्राहक चुनें", cust_options)
         
@@ -155,7 +155,7 @@ else:
             st.warning("Inventory empty! / स्टॉक खाली है।")
         else:
             if not st.session_state.active_prod:
-                prod_dict = {p[1]: p for p in prod_list}
+                prod_dict = {f"{p[1]} (Price: {p[2]})": p for p in prod_list}
                 search_prod = st.selectbox("Search/Select Product Name", list(prod_dict.keys()))
                 st.session_state.active_prod = prod_dict[search_prod]
                 
@@ -203,9 +203,8 @@ else:
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
 
-    # ─── 4. CUSTOMER SCREEN (ROBUST FORM WRAPPER FIX) ───
+    # ─── 4. CUSTOMER SCREEN (100% FIXED NO NESTING BLOCKS) ───
     elif current_form == "customers":
         st.subheader("Customer Database")
+        st.write("##### ➕ Register New Customer / नया ग्राहक जोड़ें")
         
-        # Enclosing both inputs and buttons within an unbreakable explicit Form container
-        with st.form("add_customer_clean_form_v1", clear_on_submit=True):
