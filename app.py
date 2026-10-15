@@ -208,5 +208,6 @@ else:
         st.write("##### ➕ Register New Customer / नया ग्राहक जोड़ें")
         c_name = st.text_input("Customer Name / ग्राहक का नाम")
         c_phone = st.text_input("Mobile Number / मोबाइल नंबर")
-        if st.form_submit_button("Register Customer"):
+         key="cust_name_final_complete")
+      
         
