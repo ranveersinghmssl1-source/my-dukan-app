@@ -6,15 +6,14 @@ from datetime import datetime
 # ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
-# ─── ONLINE CLOUD SQL CONNECTION (CORRECT DIRECT URL) ───
+# ─── ONLINE CLOUD SQL CONNECTION ───
 DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PASSWORD = "1234"  # <── Agar aapka database password alag hai toh yahan sahi likhein
+DB_PASSWORD = "1234"  # <── Apna database password check kar ke likhein
 DB_PORT = "5432"
 
 def init_db():
-    """Online Database me tables initialize karna"""
     try:
         conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT)
         cursor = conn.cursor()
@@ -69,7 +68,7 @@ standard_menu = ["dashboard", "billing", "inventory", "customers"]
 
 if lang_choice == "Hindi":
     display_menu = ["📊 डैशबोर्ड", "🛒 बिलिंग काउंटर", "📦 स्टॉक गोदाम", "👥 ग्राहक खाता"]
-    _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर मैनेजमेंट"
+    _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर Management"
 else:
     display_menu = ["📊 Dashboard", "🛒 Billing Form", "📦 Inventory (Stock)", "👥 Customers Management"]
     _title = "🏬 My Dukan PRO - Digital Store Management"
@@ -170,6 +169,9 @@ else:
             pay_mode = st.radio("Payment Mode", ["Cash", "Udhaar (Balance)"], horizontal=True)
             disabled_btn = True if pay_mode == "Udhaar (Balance)" and c_name == "Walk-in" else False
             
+            if disabled_btn:
+                st.warning("⚠️ Registered Customer needed for Balance option.")
+                
             if st.button("🖨️ Generate Bill", disabled=disabled_btn):
                 run_query("UPDATE products SET stock = %s WHERE product_id = %s", (available_stock - qty, p_id))
                 run_query("INSERT INTO bills (customer_name, customer_phone, total_amount, payment_mode, bill_date) VALUES (%s, %s, %s, %s, %s)", 
@@ -183,7 +185,7 @@ else:
         st.subheader("Inventory Stock Room" if lang_choice == "English" else "इन्वेंट्री स्टॉक गोदाम")
         tab1, tab2 = st.tabs(["➕ Add Item", "📋 Stock Book"])
         with tab1:
-            with st.form("inventory_form", clear_on_submit=True):
+            with st.form("inventory_form_clean", clear_on_submit=True):
                 p_barcode = st.text_input("Barcode Number")
                 p_name = st.text_input("Product Name")
                 p_supplier = st.text_input("Supplier Name")
@@ -202,6 +204,5 @@ else:
                 df_prod = pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"])
                 st.dataframe(df_prod, use_container_width=True)
 
-    # ─── 4. CUSTOMER SCREEN (FIXED INDENTATION FOR VISIBILITY) ───
+    # ─── 4. CUSTOMER SCREEN (FULLY STABLE & VISIBLE LAYOUT) ───
     elif current_form == "customers":
-        st.subheader("Customer Database" if lang_choice == "English" else "ग्राहक बहीखाता रजिस्टर")
