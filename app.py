@@ -10,7 +10,7 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 DB_HOST = "://supabase.com"
 DB_NAME = "postgres"
 DB_USER = "postgres.enzhtmepoqfyvxenamsx"
-DB_PASSWORD = "YOUR_DATABASE_PASSWORD"  # <── Yahan apna database password likhein
+DB_PASSWORD = "YOUR_DATABASE_PASSWORD"  1234
 DB_PORT = "6543"
 
 def init_db():
