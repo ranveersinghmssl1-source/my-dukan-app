@@ -67,7 +67,7 @@ lang_choice = st.sidebar.selectbox("🌐 Choose Language / भाषा चु�
 standard_menu = ["dashboard", "billing", "inventory", "customers"]
 
 if lang_choice == "Hindi":
-    display_menu = ["📊 डैशबोर्ड", "🛒 बिलिंग काउंटर", "📦 STOCK गोदाम", "👥 g ग्राहक खाता"]
+    display_menu = ["📊 डैशबोर्ड", "🛒 बिलिंग काउंटर", "📦 STOCK गोदाम", "👥 ग्राहक खाता"]
     _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर Management"
 else:
     display_menu = ["📊 Dashboard", "🛒 Billing Form", "📦 Inventory (Stock)", "👥 Customers Management"]
@@ -203,10 +203,9 @@ else:
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
 
-    # ─── 4. CUSTOMER SCREEN (FULLY CONTAINERIZED FORM UNITS) ───
+    # ─── 4. CUSTOMER SCREEN (LINEAR INDEPENDENT LAYOUT) ───
     elif current_form == "customers":
         st.subheader("Customer Database")
+        st.write("### ➕ Register New Customer / नया ग्राहक जोड़ें")
         
-        with st.container(border=True):
-            st.markdown("##### ➕ Register New Customer / नया ग्राहक जोड़ें")
-            c_name = st.text_input("Customer Name / ग्राहक का नाम", key="input_cust_name_final")
+        # Simple inputs outside any cards to prevent system hiding glitches
