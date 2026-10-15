@@ -6,18 +6,14 @@ from datetime import datetime
 # ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
-# ─── ONLINE CLOUD SQL CONNECTION ───
+# ─── ONLINE CLOUD SQL CONNECTION (CORRECTED HOST) ───
 DB_HOST = "://supabase.com"
 DB_NAME = "postgres"
 DB_USER = "postgres.enzhtmepoqfyvxenamsx"
-DB_PASSWORD = "1234"  # <── Agar aapka password 1234 hai toh yahan sahi likhein
-DB_PORT = "6543"
-
-
+DB_PASSWORD = "1234"  # <── Agar password alag hai toh badal dena
 DB_PORT = "6543"
 
 def init_db():
-    """Online Database me PostgreSQL compatible tables automatic banana"""
     try:
         conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASSWORD, port=DB_PORT)
         cursor = conn.cursor()
@@ -25,14 +21,14 @@ def init_db():
                             customer_id SERIAL PRIMARY KEY,
                             name TEXT NOT NULL, phone TEXT UNIQUE NOT NULL)''')
         cursor.execute('''CREATE TABLE IF NOT EXISTS products (
-                        product_id SERIAL PRIMARY KEY,
-                        barcode TEXT UNIQUE,
-                        name TEXT NOT NULL, 
-                        supplier TEXT,
-                        unit_type TEXT,
-                        weight_kg REAL,
-                        price REAL NOT NULL, 
-                        stock INTEGER NOT NULL)''')
+                            product_id SERIAL PRIMARY KEY,
+                            barcode TEXT UNIQUE,
+                            name TEXT NOT NULL, 
+                            supplier TEXT,
+                            unit_type TEXT,
+                            weight_kg REAL,
+                            price REAL NOT NULL, 
+                            stock INTEGER NOT NULL)''')
         cursor.execute('''CREATE TABLE IF NOT EXISTS bills (
                             bill_no SERIAL PRIMARY KEY,
                             customer_name TEXT, 
@@ -130,7 +126,7 @@ elif current_form == "billing":
         cust_list = run_query("SELECT name, phone FROM customers", fetch=True)
         cust_options = [f"{c[0]} ({c[1]})" for c in cust_list] if cust_list else []
         cust_options.insert(0, "Walk-in Customer")
-        selected_cust_info = st.selectbox("Customer / ग्राहक चुनें", cust_options)
+        selected_cust_info = st.selectbox("Customer / g ग्राहक चुनें", cust_options)
         
         if " (" in selected_cust_info:
             parts = selected_cust_info.split(" (")
@@ -140,7 +136,7 @@ elif current_form == "billing":
             c_name = "Walk-in"
             c_phone = "0000000000"
 
-        col_input, col_btn = st.columns([4, 1])
+        col_input, col_btn = st.columns()
         with col_input:
             barcode_input = st.text_input("🔍 SCAN BARCODE HERE", key="bill_barcode").strip()
         with col_btn:
@@ -178,9 +174,6 @@ elif current_form == "billing":
             pay_mode = st.radio("Payment Mode", ["Cash", "Udhaar (Balance)"], horizontal=True)
             disabled_btn = True if pay_mode == "Udhaar (Balance)" and c_name == "Walk-in" else False
             
-            if disabled_btn:
-                st.warning("⚠️ Registered Customer needed for Balance option.")
-                
             if st.button("🖨️ Generate Bill", disabled=disabled_btn):
                 run_query("UPDATE products SET stock = %s WHERE product_id = %s", (available_stock - qty, p_id))
                 run_query("INSERT INTO bills (customer_name, customer_phone, total_amount, payment_mode, bill_date) VALUES (%s, %s, %s, %s, %s)", 
@@ -213,3 +206,7 @@ elif current_form == "inventory":
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
 
+# ─── 4. CUSTOMER SCREEN ───
+elif current_form == "customers":
+    if check_lock():
+        st.subheader("Customer Database")
