@@ -202,6 +202,8 @@ else:
             data = run_query("SELECT barcode, name, supplier, unit_type, weight_kg, price, stock FROM products", fetch=True)
             if data:
                 st.dataframe(pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"]), use_container_width=True)
+
+
 # ─── 4. CUSTOMER SCREEN ───
 elif current_form == "customers":
     st.subheader("Customer Database" if lang_choice == "English" else "ग्राहक बहीखाता रजिस्टर")
