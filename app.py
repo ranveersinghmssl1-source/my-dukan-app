@@ -6,11 +6,11 @@ from datetime import datetime
 # ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
-# ─── ONLINE CLOUD SQL CONNECTION (DIRECT SAFE HOST) ───
+# ─── ONLINE CLOUD SQL CONNECTION ───
 DB_HOST = "db.enzhtmepoqfyvxenamsx.supabase.co"
 DB_NAME = "postgres"
 DB_USER = "postgres"
-DB_PASSWORD = "YOUR_PASSWORD"  # <── Yahan apna database password likhein
+DB_PASSWORD = "1234"  # <── Yahan apna database password check kar ke likhein
 DB_PORT = "5432"
 
 def init_db():
@@ -69,7 +69,7 @@ standard_menu = ["dashboard", "billing", "inventory", "customers"]
 
 if lang_choice == "Hindi":
     display_menu = ["📊 डैशबोर्ड", "🛒 बिलिंग काउंटर", "📦 स्टॉक गोदाम", "👥 ग्राहक खाता"]
-    _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर मैनेजमेंट"
+    _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर Management"
 else:
     display_menu = ["📊 Dashboard", "🛒 Billing Form", "📦 Inventory (Stock)", "👥 Customers Management"]
     _title = "🏬 My Dukan PRO - Digital Store Management"
