@@ -113,10 +113,11 @@ if current_form == "dashboard":
     else:
         st.info("No transactions recorded yet.")
 
-# ─── 2. BILLING SCREEN ───
+# ─── 2. BILLING SCREEN (AUTOMATIC BARCODE SEARCH) ───
 elif current_form == "billing":
     st.subheader("🛒 Fast Billing Counter" if lang_choice == "English" else "🛒 फ़ास्ट बिलिंग काउंटर")
     
+    # Customer Selection
     cust_list = run_query("SELECT name, phone FROM customers", fetch=True)
     cust_options = [f"{c[0]} ({c[1]})" for c in cust_list] if cust_list else []
     cust_options.insert(0, "Walk-in Customer" if lang_choice == "English" else "नया या अनजान ग्राहक")
@@ -130,78 +131,54 @@ elif current_form == "billing":
         c_name = "Walk-in"
         c_phone = "0000000000"
 
-    col_input, col_btn = st.columns([4, 1])
-    with col_input:
-        barcode_input = st.text_input("🔍 SCAN BARCODE HERE", key="bill_barcode").strip()
-    with col_btn:
-        st.write(""); st.write("")
-        enter_pressed = st.button("↩️ Enter / आइटम जोड़ें")
+    # 🎯 AUTOMATIC BARCODE INPUT BOX (बिना बटन के काम करेगा)
+    barcode_input = st.text_input("🔍 SCAN BARCODE HERE / यहाँ बारकोड स्कैन करें", key="bill_barcode", autocomplete="off").strip()
 
-    if "active_prod" not in st.session_state:
-        st.session_state.active_prod = None
-
-    if barcode_input and (enter_pressed or barcode_input != ""):
+    # बारकोड बॉक्स में कुछ भी लिखते ही या स्कैन होते ही यह कोड अपने आप बैकग्राउंड में एक्टिव हो जाएगा
+    if barcode_input:
         res = run_query("SELECT product_id, name, price, stock, unit_type, weight_kg FROM products WHERE barcode = ?", (barcode_input,), fetch=True)
         if res:
+            # अगर डेटाबेस में बारकोड मिल गया, तो उसे session_state में सेव कर लें
             st.session_state.active_prod = res[0]
         else:
             st.session_state.active_prod = None
-            st.error("Barcode Not Found!")
+            st.error("❌ Barcode Not Found! / यह बारकोड इन्वेंट्री में नहीं मिला!")
 
+    # अगर मैन्युअली भी सर्च करना हो तो बैकअप ऑप्शन
     prod_list = run_query("SELECT product_id, name, price, stock, unit_type, weight_kg FROM products WHERE stock > 0", fetch=True)
     
     if not prod_list:
         st.warning("Inventory empty! Please add products first.")
     else:
-        if not st.session_state.active_prod:
+        # अगर बारकोड से सामान नहीं मिला है, तभी मैन्युअल ड्रॉपडाउन दिखाएं
+        if "active_prod" not in st.session_state or st.session_state.active_prod is None:
             prod_dict = {p[1]: p for p in prod_list}
-            search_prod = st.selectbox("Search/Select Product Name", list(prod_dict.keys()))
+            search_prod = st.selectbox("Or Search by Name / या नाम से चुनें", list(prod_dict.keys()))
             st.session_state.active_prod = prod_dict[search_prod]
             
-        p_id, p_name, current_price, available_stock, u_type, w_kg = st.session_state.active_prod
-        st.info(f"🎯 Item: **{p_name}** | Price: ₹{current_price} | Stock: {available_stock} {u_type} ({w_kg} KG)")
-        
-        qty = st.number_input("Quantity", min_value=1, max_value=int(available_stock), value=1)
-        total_price = current_price * qty
-        st.markdown(f"### **Grand Total: ₹{total_price:,.2f}**")
-        
-        pay_mode = st.radio("Payment Mode", ["Cash", "Udhaar (Balance)"], horizontal=True)
-        
-        disabled_btn = True if pay_mode == "Udhaar (Balance)" and c_name == "Walk-in" else False
-        if disabled_btn:
-            st.warning("⚠️ Walk-in customers cannot take Udhaar. Please select or add a registered customer.")
+        # सामान की जानकारी दिखाना
+        if st.session_state.active_prod:
+            p_id, p_name, current_price, available_stock, u_type, w_kg = st.session_state.active_prod
+            st.info(f"🎯 Item Found: **{p_name}** | Price: ₹{current_price} | Stock: {available_stock} {u_type} ({w_kg} KG)")
             
-        if st.button("🖨️ Generate Bill", disabled=disabled_btn):
-            run_query("UPDATE products SET stock = ? WHERE product_id = ?", (available_stock - qty, p_id))
-            run_query("INSERT INTO bills (customer_name, customer_phone, total_amount, payment_mode, bill_date) VALUES (?, ?, ?, ?, ?)", 
-                      (c_name, c_phone, total_price, pay_mode, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            st.success("🎉 Bill Generated Successfully!")
-            st.session_state.active_prod = None
-            st.balloons()
+            qty = st.number_input("Quantity / मात्रा", min_value=1, max_value=int(available_stock), value=1)
+            total_price = current_price * qty
+            st.markdown(f"### **Grand Total: ₹{total_price:,.2f}**")
+            
+            pay_mode = st.radio("Payment Mode", ["Cash", "Udhaar (Balance)"], horizontal=True)
+            
+            disabled_btn = True if pay_mode == "Udhaar (Balance)" and c_name == "Walk-in" else False
+            if disabled_btn:
+                st.warning("⚠️ Walk-in customers cannot take Udhaar. Please select a registered customer.")
+                
+            if st.button("🖨️ Generate Bill", disabled=disabled_btn, type="primary"):
+                # स्टॉक कम करना और बिल सेव करना
+                run_query("UPDATE products SET stock = ? WHERE product_id = ?", (available_stock - qty, p_id))
+                run_query("INSERT INTO bills (customer_name, customer_phone, total_amount, payment_mode, bill_date) VALUES (?, ?, ?, ?, ?)", 
+                          (c_name, c_phone, total_price, pay_mode, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                st.success("🎉 Bill Generated Successfully!")
+                
+                # अगले स्कैन के लिए बारकोड इनपुट और एक्टिव प्रोडक्ट को साफ़ करना
+                st.session_state.active_prod = None
+                st.balloons()
 
-# ─── 3. INVENTORY SCREEN ───
-elif current_form == "inventory":
-    st.subheader("📦 Inventory Stock Room" if lang_choice == "English" else "📦 इन्वेंट्री स्टॉक गोदाम")
-    tab1, tab2 = st.tabs(["➕ Add Item / नया सामान", "📋 Stock Book / रजिस्टर"])
-    
-    with tab1:
-        with st.form("inventory_form", clear_on_submit=True):
-            p_barcode = st.text_input("Barcode Number / बारकोड")
-            p_name = st.text_input("Product Name / सामान का नाम")
-            p_supplier = st.text_input("Supplier Name / सप्लायर का नाम")
-            
-            col_u, col_k = st.columns(2)
-            with col_u:
-                p_unit = st.selectbox("Unit Type / यूनिट प्रकार", ["Pcs", "Packet", "Box", "Kg", "Litre"])
-            with col_k:
-                p_weight = st.number_input("Weight per unit (KG) / वजन", min_value=0.0, step=0.01)
-                
-            col_p, col_s = st.columns(2)
-            with col_p:
-                p_price = st.number_input("Price per unit / कीमत (₹)", min_value=0.0, step=1.0)
-            with col_s:
-                p_stock = st.number_input("Initial Stock Qty / स्टॉक मात्रा", min_value=1, step=1)
-                
-            submitted = st.form_submit_button("💾 Save Product")
-            if submitted:
-                if p_barcode and p_name:
