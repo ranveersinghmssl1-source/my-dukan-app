@@ -6,55 +6,64 @@ from datetime import datetime
 # ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
-# ─── DATABASE INITIALIZATION (UPDATED WITH SUPPLIER & UNITS) ───
+# ─── CUSTOM CSS FOR PROFESSIONAL LOOK ───
+st.markdown("""
+    <style>
+    .metric-card {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+        border-left: 5px solid #4CAF50;
+    }
+    .metric-title { font-size: 16px; color: #6c757d; font-weight: bold; }
+    .metric-value { font-size: 28px; color: #212529; font-weight: bold; margin-top: 5px; }
+    </style>
+""", unsafe_allow_html=True)
+
+# ─── DATABASE INITIALIZATION ───
 def init_db():
-    conn = sqlite3.connect('dukan_ultimate_v1.db')
-    cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS customers (
-                        customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT NOT NULL, phone TEXT UNIQUE NOT NULL)''')
-    # Added supplier, unit_type, weight_kg to products
-    cursor.execute('''CREATE TABLE IF NOT EXISTS products (
-                        product_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        barcode TEXT UNIQUE,
-                        name TEXT NOT NULL, 
-                        supplier TEXT,
-                        unit_type TEXT,
-                        weight_kg REAL,
-                        price REAL NOT NULL, 
-                        stock INTEGER NOT NULL)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS bills (
-                        bill_no INTEGER PRIMARY KEY AUTOINCREMENT,
-                        customer_name TEXT, 
-                        customer_phone TEXT,
-                        total_amount REAL, 
-                        payment_mode TEXT,
-                        bill_date TEXT)''')
-    conn.commit()
-    conn.close()
+    with sqlite3.connect('dukan_ultimate_v1.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS customers (
+                            customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            name TEXT NOT NULL, phone TEXT UNIQUE NOT NULL)''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS products (
+                            product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            barcode TEXT UNIQUE,
+                            name TEXT NOT NULL, 
+                            supplier TEXT,
+                            unit_type TEXT,
+                            weight_kg REAL,
+                            price REAL NOT NULL, 
+                            stock INTEGER NOT NULL)''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS bills (
+                            bill_no INTEGER PRIMARY KEY AUTOINCREMENT,
+                            customer_name TEXT, 
+                            customer_phone TEXT,
+                            total_amount REAL, 
+                            payment_mode TEXT,
+                            bill_date TEXT)''')
+        conn.commit()
 
 init_db()
 
 def run_query(query, params=(), fetch=False):
-    conn = sqlite3.connect('dukan_ultimate_v1.db')
-    cursor = conn.cursor()
-    try:
-        cursor.execute(query, params)
-        data = None
-        if fetch:
-            data = cursor.fetchall()
-        conn.commit()
-        return data
-    except Exception as e:
-        st.error(f"Database Error: {e}")
-        return None
-    finally:
-        conn.close()
+    with sqlite3.connect('dukan_ultimate_v1.db') as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute(query, params)
+            if fetch:
+                return cursor.fetchall()
+            conn.commit()
+            return None
+        except Exception as e:
+            st.error(f"⚠️ Database Error: {e}")
+            return None
 
 # ─── LANGUAGE SELECTION ───
 lang_choice = st.sidebar.selectbox("🌐 Choose Language / भाषा चुनें", ["English", "Hindi"])
-
-# Fixed Menu Strings to avoid routing failures
 standard_menu = ["dashboard", "billing", "inventory", "customers", "portal"]
 
 if lang_choice == "Hindi":
@@ -64,7 +73,7 @@ else:
     display_menu = ["📊 Dashboard", "🛒 Billing Form", "📦 Inventory (Stock)", "👥 Customers Management", "🔐 Customer Login Portal"]
     _title = "🏬 My Dukan PRO - Digital Store Management"
 
-# ─── SIDEBAR NAVIGATION FIXED ───
+# ─── SIDEBAR NAVIGATION ───
 choice_display = st.sidebar.selectbox("Menu Navigation / मेनू चुनें", display_menu, key="main_navigation_bar")
 choice_idx = display_menu.index(choice_display)
 current_form = standard_menu[choice_idx]
@@ -75,29 +84,38 @@ st.markdown("---")
 # ─── 1. DASHBOARD SCREEN ───
 if current_form == "dashboard":
     if lang_choice == "Hindi":
-        st.subheader("दुकान की लाइव कमाई और रिपोर्ट्स")
+        st.subheader("📊 दुकान की लाइव कमाई और रिपोर्ट्स")
         l_sales, l_cash, l_udhaar = "💰 कुल बिक्री (नकद + उधार)", "💵 कुल प्राप्त नकद", "📉 कुल मार्केट उधार"
     else:
-        st.subheader("Dukan Live Summary & Reports")
+        st.subheader("📊 Dukan Live Summary & Reports")
         l_sales, l_cash, l_udhaar = "💰 Total Sales (Cash + Balance)", "💵 Total Cash Received", "📉 Total Market Udhaar (Balance)"
 
-    total_sales_raw = run_query("SELECT SUM(total_amount) FROM bills", fetch=True)
-    total_sales = total_sales_raw[0][0] if total_sales_raw and total_sales_raw[0][0] is not None else 0.0
+    # Data Fetching
+    t_sales = run_query("SELECT SUM(total_amount) FROM bills", fetch=True)[0][0] or 0.0
+    c_sales = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode = 'Cash'", fetch=True)[0][0] or 0.0
+    u_sales = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode LIKE '%Udhaar%'", fetch=True)[0][0] or 0.0
     
-    cash_sales_raw = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode = 'Cash'", fetch=True)
-    cash_sales = cash_sales_raw[0][0] if cash_sales_raw and cash_sales_raw[0][0] is not None else 0.0
-    
-    udhaar_sales_raw = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode = 'Udhaar (Balance)'", fetch=True)
-    udhaar_sales = udhaar_sales_raw[0][0] if udhaar_sales_raw and udhaar_sales_raw[0][0] is not None else 0.0
-    
+    # Modern UI UI Cards
     col1, col2, col3 = st.columns(3)
-    col1.metric(l_sales, f"₹{total_sales:,.2f}")
-    col2.metric(l_cash, f"₹{cash_sales:,.2f}")
-    col3.metric(l_udhaar, f"₹{udhaar_sales:,.2f}")
+    with col1:
+        st.markdown(f'<div class="metric-card"><div class="metric-title">{l_sales}</div><div class="metric-value">₹{t_sales:,.2f}</div></div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown(f'<div class="metric-card" style="border-left-color: #2196F3;"><div class="metric-title">{l_cash}</div><div class="metric-value">₹{c_sales:,.2f}</div></div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown(f'<div class="metric-card" style="border-left-color: #f44336;"><div class="metric-title">{l_udhaar}</div><div class="metric-value">₹{u_sales:,.2f}</div></div>', unsafe_allow_html=True)
+
+    # Recent Transactions Table
+    st.markdown("### 📋 Recent Transactions / हालिया बिक्री")
+    recent_data = run_query("SELECT bill_no, customer_name, total_amount, payment_mode, bill_date FROM bills ORDER BY bill_no DESC LIMIT 5", fetch=True)
+    if recent_data:
+        df = pd.DataFrame(recent_data, columns=["Bill No", "Customer", "Amount", "Mode", "Date"])
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info("No transactions recorded yet.")
 
 # ─── 2. BILLING SCREEN ───
 elif current_form == "billing":
-    st.subheader("Fast Billing Counter" if lang_choice == "English" else "फ़ास्ट बिलिंग काउंटर")
+    st.subheader("🛒 Fast Billing Counter" if lang_choice == "English" else "🛒 फ़ास्ट बिलिंग काउंटर")
     
     cust_list = run_query("SELECT name, phone FROM customers", fetch=True)
     cust_options = [f"{c[0]} ({c[1]})" for c in cust_list] if cust_list else []
@@ -133,7 +151,7 @@ elif current_form == "billing":
     prod_list = run_query("SELECT product_id, name, price, stock, unit_type, weight_kg FROM products WHERE stock > 0", fetch=True)
     
     if not prod_list:
-        st.warning("Inventory empty!")
+        st.warning("Inventory empty! Please add products first.")
     else:
         if not st.session_state.active_prod:
             prod_dict = {p[1]: p for p in prod_list}
@@ -145,27 +163,30 @@ elif current_form == "billing":
         
         qty = st.number_input("Quantity", min_value=1, max_value=int(available_stock), value=1)
         total_price = current_price * qty
-        st.markdown(f"### **Grand Total: ₹{total_price}**")
+        st.markdown(f"### **Grand Total: ₹{total_price:,.2f}**")
         
         pay_mode = st.radio("Payment Mode", ["Cash", "Udhaar (Balance)"], horizontal=True)
         
         disabled_btn = True if pay_mode == "Udhaar (Balance)" and c_name == "Walk-in" else False
+        if disabled_btn:
+            st.warning("⚠️ Walk-in customers cannot take Udhaar. Please select or add a registered customer.")
+            
         if st.button("🖨️ Generate Bill", disabled=disabled_btn):
             run_query("UPDATE products SET stock = ? WHERE product_id = ?", (available_stock - qty, p_id))
             run_query("INSERT INTO bills (customer_name, customer_phone, total_amount, payment_mode, bill_date) VALUES (?, ?, ?, ?, ?)", 
                       (c_name, c_phone, total_price, pay_mode, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            st.success("Bill Generated Successfully!")
+            st.success("🎉 Bill Generated Successfully!")
             st.session_state.active_prod = None
             st.balloons()
 
-# ─── 3. INVENTORY SCREEN (WITH SUPPLIER, UNIT & KG) ───
+# ─── 3. INVENTORY SCREEN ───
 elif current_form == "inventory":
-    st.subheader("Inventory Stock Room" if lang_choice == "English" else "इन्वेंट्री स्टॉक गोदाम")
+    st.subheader("📦 Inventory Stock Room" if lang_choice == "English" else "📦 इन्वेंट्री स्टॉक गोदाम")
     tab1, tab2 = st.tabs(["➕ Add Item / नया सामान", "📋 Stock Book / रजिस्टर"])
     
     with tab1:
         with st.form("inventory_form", clear_on_submit=True):
-            p_barcode = st.text_input("Barcode Number")
+            p_barcode = st.text_input("Barcode Number / बारकोड")
             p_name = st.text_input("Product Name / सामान का नाम")
             p_supplier = st.text_input("Supplier Name / सप्लायर का नाम")
             
@@ -173,53 +194,14 @@ elif current_form == "inventory":
             with col_u:
                 p_unit = st.selectbox("Unit Type / यूनिट प्रकार", ["Pcs", "Packet", "Box", "Kg", "Litre"])
             with col_k:
-                p_weight = st.number_input("Weight per unit (KG) / वजन (किग्रा)", min_value=0.0, step=0.01)
+                p_weight = st.number_input("Weight per unit (KG) / वजन", min_value=0.0, step=0.01)
                 
-            p_price = st.number_input("Price per unit / कीमत", min_value=0.0)
-            p_stock = st.number_input("Stock Qty / कुल मात्रा", min_value=1, step=1)
-            
-            if st.form_submit_button("Save Item / सुरक्षित करें"):
-                if p_name and p_price > 0:
-                    b_val = p_barcode if p_barcode else None
-                    run_query("INSERT INTO products (barcode, name, supplier, unit_type, weight_kg, price, stock) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                              (b_val, p_name, p_supplier, p_unit, p_weight, p_price, p_stock))
-                    st.success("Product successfully added!")
-                    
-    with tab2:
-        data = run_query("SELECT barcode, name, supplier, unit_type, weight_kg, price, stock FROM products", fetch=True)
-        if data:
-            df_stock = pd.DataFrame(data, columns=["Barcode", "Item Name", "Supplier", "Unit", "Weight (KG)", "Price (₹)", "Stock Qty"])
-            st.dataframe(df_stock, use_container_width=True)
-
-# ─── 4. CUSTOMER SCREEN ───
-elif current_form == "customers":
-    st.subheader("Customer Database" if lang_choice == "English" else "ग्राहक बहीखाता रजिस्टर")
-    with st.form("add_cust_form", clear_on_submit=True):
-        c_name = st.text_input("Customer Name / ग्राहक का नाम")
-        c_phone = st.text_input("Mobile Number / मोबाइल नंबर")
-        if st.form_submit_button("Register Customer"):
-            run_query("INSERT INTO customers (name, phone) VALUES (?, ?)", (c_name, c_phone))
-            st.success("Registered successfully!")
-    
-    c_data = run_query("SELECT name, phone FROM customers", fetch=True)
-    if c_data:
-        st.dataframe(pd.DataFrame(c_data, columns=["Naam", "Mobile Number"]), use_container_width=True)
-
-# ─── 5. CUSTOMER PORTAL (100% FIXED & TESTED) ───
-elif current_form == "portal":
-    st.subheader("Customer Login Portal" if lang_choice == "English" else "ग्राहक लॉगिन पोर्टल")
-    c_phone = st.text_input("Enter your registered mobile number / अपना पंजीकृत मोबाइल नंबर दर्ज करें")
-    
-    if st.button("Login / लॉगिन करें"):
-        cust_info = run_query("SELECT name FROM customers WHERE phone = ?", (c_phone,), fetch=True)
-        if cust_info:
-            c_name = cust_info[0][0]
-            st.success(f"Welcome {c_name}!")
-            bills = run_query("SELECT bill_no, total_amount, payment_mode, bill_date FROM bills WHERE customer_phone = ?", (c_phone,), fetch=True)
-            if bills:
-                df_bills = pd.DataFrame(bills, columns=["Bill No", "Amount (₹)", "Payment Mode", "Date"])
-                st.dataframe(df_bills, use_container_width=True)
-            else:
-                st.info("No bills found for this customer.")
-        else:
-            st.error("Customer not found. Please register first.")
+            col_p, col_s = st.columns(2)
+            with col_p:
+                p_price = st.number_input("Price per unit / कीमत (₹)", min_value=0.0, step=1.0)
+            with col_s:
+                p_stock = st.number_input("Initial Stock Qty / स्टॉक मात्रा", min_value=1, step=1)
+                
+            submitted = st.form_submit_button("💾 Save Product")
+            if submitted:
+                if p_barcode and p_name:
