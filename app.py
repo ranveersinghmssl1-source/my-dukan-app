@@ -214,13 +214,36 @@ elif current_form == "customers":
                 columns=["ID", "Name", "Phone"]
             )
          
-
-            st.dataframe(df, use_container_width=True)
-        else:
-            st.info("No customers found")
 elif current_form == "inventory":
 
     st.subheader("📦 Inventory Management")
+
+    with st.form("add_product"):
+        barcode = st.text_input("Barcode")
+        name = st.text_input("Product Name")
+        price = st.number_input("Price", min_value=0.0)
+        stock = st.number_input("Stock", min_value=0, step=1)
+
+        submit = st.form_submit_button("Add Product")
+
+        if submit:
+            run_query(
+                """
+                INSERT INTO products
+                (barcode, name, supplier, unit_type, weight_kg, price, stock)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    barcode,
+                    name,
+                    "",
+                    "PCS",
+                    0,
+                    price,
+                    stock
+                )
+            )
+            st.success("✅ Product Added")
 
     products = run_query(
         "SELECT product_id, barcode, name, price, stock FROM products",
