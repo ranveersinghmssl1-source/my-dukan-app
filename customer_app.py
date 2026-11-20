@@ -16,7 +16,19 @@ init_db()
 import streamlit as st
 import pandas as pd
 import sqlite3
+def init_db():
+    with sqlite3.connect('dukan_ultimate_v1.db') as conn:
+        cursor = conn.cursor()
 
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS customers (
+            customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            phone TEXT UNIQUE NOT NULL
+        )
+        """)
+
+        conn.commit()
 # ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="Grahak Khata Portal", page_icon="🔐", layout="wide")
 
