@@ -213,6 +213,23 @@ elif current_form == "customers":
                 customers,
                 columns=["ID", "Name", "Phone"]
             )
+            elif current_form == "portal":
+
+    st.subheader("🔐 Customer Login Portal")
+
+    phone = st.text_input("Enter Mobile Number")
+
+    if st.button("Search"):
+        customer = run_query(
+            "SELECT name, phone FROM customers WHERE phone=?",
+            (phone,),
+            fetch=True
+        )
+
+        if customer:
+            st.success(f"Welcome {customer[0][0]}")
+        else:
+            st.error("Customer Not Found")
             st.dataframe(df, use_container_width=True)
         else:
             st.info("No Customers Found")
