@@ -213,6 +213,9 @@ elif current_form == "customers":
                 customers,
                 columns=["ID", "Name", "Phone"]
             )
+            elif current_form == "portal":
+    st.switch_page("customer_app.py")
+
             st.dataframe(df, use_container_width=True)
         else:
             st.info("No customers found")
