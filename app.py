@@ -81,26 +81,32 @@ current_form = standard_menu[choice_idx]
 st.title(_title)
 st.markdown("---")
 
-# ─── DASHBOARD SCREEN ───
-
 if current_form == "dashboard":
 
-    st.subheader("📊 Business Dashboard")
+    st.subheader("📊 Smart Business Intelligence Dashboard")
 
-    # SALES DATA
+    # ===== KPI DATA =====
 
-    t_sales = run_query(
+    total_sales = run_query(
         "SELECT COALESCE(SUM(total_amount),0) FROM bills",
         fetch=True
     )[0][0]
 
-    c_sales = run_query(
-        "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE payment_mode='Cash'",
+    cash_sales = run_query(
+        """
+        SELECT COALESCE(SUM(total_amount),0)
+        FROM bills
+        WHERE payment_mode='Cash'
+        """,
         fetch=True
     )[0][0]
 
-    u_sales = run_query(
-        "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE payment_mode LIKE '%Udhaar%'",
+    udhaar_sales = run_query(
+        """
+        SELECT COALESCE(SUM(total_amount),0)
+        FROM bills
+        WHERE payment_mode LIKE '%Udhaar%'
+        """,
         fetch=True
     )[0][0]
 
@@ -115,102 +121,82 @@ if current_form == "dashboard":
     )[0][0]
 
     low_stock = run_query(
-        "SELECT COUNT(*) FROM products WHERE stock < 10",
+        """
+        SELECT COUNT(*)
+        FROM products
+        WHERE stock < 10
+        """,
         fetch=True
     )[0][0]
 
-    # TOP METRICS
+    # ===== PREMIUM KPI CARDS =====
 
-    c1, c2, c3, c4, c5 = st.columns(5)
+    c1,c2,c3,c4,c5,c6 = st.columns(6)
 
-    with c1:
-        st.metric(
-            "💰 Total Sales",
-            f"₹{t_sales:,.2f}"
-        )
+    c1.metric(
+        "💰 Total Sales",
+        f"₹{total_sales:,.0f}"
+    )
 
-    with c2:
-        st.metric(
-            "💵 Cash Sale",
-            f"₹{c_sales:,.2f}"
-        )
+    c2.metric(
+        "💵 Cash",
+        f"₹{cash_sales:,.0f}"
+    )
 
-    with c3:
-        st.metric(
-            "📉 Udhaar",
-            f"₹{u_sales:,.2f}"
-        )
+    c3.metric(
+        "📉 Udhaar",
+        f"₹{udhaar_sales:,.0f}"
+    )
 
-    with c4:
-        st.metric(
-            "📦 Products",
-            total_products
-        )
+    c4.metric(
+        "📦 Products",
+        total_products
+    )
 
-    with c5:
-        st.metric(
-            "👥 Customers",
-            total_customers
-        )
+    c5.metric(
+        "👥 Customers",
+        total_customers
+    )
+
+    c6.metric(
+        "⚠️ Low Stock",
+        low_stock
+    )
 
     st.markdown("---")
 
-    # LOW STOCK ALERT
+    # ===== SALES CHART =====
 
-    if low_stock > 0:
+    st.subheader("📈 Sales Trend")
 
-        st.error(
-            f"⚠️ {low_stock} Products Have Low Stock (Less Than 10)"
-        )
-
-    # RECENT SALES
-
-    st.subheader("🧾 Recent Transactions")
-
-    recent_data = run_query(
+    sales_chart = run_query(
         """
         SELECT
-        bill_no,
-        customer_name,
-        total_amount,
-        payment_mode,
-        bill_date
+        substr(bill_date,1,10),
+        SUM(total_amount)
         FROM bills
-        ORDER BY bill_no DESC
-        LIMIT 10
+        GROUP BY substr(bill_date,1,10)
+        ORDER BY substr(bill_date,1,10)
         """,
         fetch=True
     )
 
-    if recent_data:
+    if sales_chart:
 
-        df = pd.DataFrame(
-            recent_data,
-            columns=[
-                "Bill No",
-                "Customer",
-                "Amount",
-                "Payment",
-                "Date"
-            ]
+        chart_df = pd.DataFrame(
+            sales_chart,
+            columns=["Date","Sales"]
         )
 
-        st.dataframe(
-            df,
-            use_container_width=True
-        )
+        chart_df = chart_df.set_index("Date")
 
-    else:
-
-        st.info(
-            "No Transactions Found"
-        )
+        st.line_chart(chart_df)
 
     st.markdown("---")
 
-    # LOW STOCK PRODUCTS
+    # ===== LOW STOCK PRODUCTS =====
 
-    st.subheader("📦 Low Stock Products")
+    st.subheader("⚠️ Low Stock Alert")
 
     low_stock_items = run_query(
         """
@@ -244,7 +230,52 @@ if current_form == "dashboard":
     else:
 
         st.success(
-            "✅ All Products Have Sufficient Stock"
+            "✅ All Products Stock Healthy"
+        )
+
+    st.markdown("---")
+
+    # ===== TOP SELLING REPORT =====
+
+    st.subheader("🏆 Top Recent Bills")
+
+    recent_data = run_query(
+        """
+        SELECT
+        bill_no,
+        customer_name,
+        total_amount,
+        payment_mode,
+        bill_date
+        FROM bills
+        ORDER BY bill_no DESC
+        LIMIT 10
+        """,
+        fetch=True
+    )
+
+    if recent_data:
+
+        recent_df = pd.DataFrame(
+            recent_data,
+            columns=[
+                "Bill No",
+                "Customer",
+                "Amount",
+                "Payment",
+                "Date"
+            ]
+        )
+
+        st.dataframe(
+            recent_df,
+            use_container_width=True
+        )
+
+    else:
+
+        st.info(
+            "No Sales Available"
         )
 
 # ─── 2. BILLING SCREEN (PROFESSIONAL VERSION) ───
