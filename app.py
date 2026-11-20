@@ -20,18 +20,7 @@ st.markdown("""
     .metric-title { font-size: 16px; color: #6c757d; font-weight: bold; }
     .metric-value { font-size: 28px; color: #212529; font-weight: bold; margin-top: 5px; }
     st.markdown("""
-   }
-
-[data-testid="metric-container"]{
-    background:white;
-    border-radius:12px;
-    padding:15px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.10);
-}
-
-.stDataFrame{
-    border-radius:10px;
-}
+  
 
 </style>
 """,
