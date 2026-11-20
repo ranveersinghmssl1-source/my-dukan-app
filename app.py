@@ -218,3 +218,20 @@ elif current_form == "customers":
             st.dataframe(df, use_container_width=True)
         else:
             st.info("No customers found")
+elif current_form == "inventory":
+
+    st.subheader("📦 Inventory Management")
+
+    products = run_query(
+        "SELECT product_id, barcode, name, price, stock FROM products",
+        fetch=True
+    )
+
+    if products:
+        df = pd.DataFrame(
+            products,
+            columns=["ID", "Barcode", "Name", "Price", "Stock"]
+        )
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.warning("No products available")
