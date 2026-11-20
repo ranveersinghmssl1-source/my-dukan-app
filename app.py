@@ -10,33 +10,20 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 st.markdown("""
     st.markdown("""
 st.markdown("*"
-<style>
-
-.metric-card{
-    backg*ound-color:#f8f9fa;
-    padding:20*x;
-    border-radius:10px;
-    box*shadow:0 4px 6px rgba(0,0,0,0.1);
-*   text-align:center;
-    border-l*ft:5px solid #4CAF50;
-}
-
-.metric-t*tle{
-    font-size:16px;
-    color*#6c757d;
-    font-weight:bold;
-}
-
-*metric-value{
-    font-size:28px;
-*   color:#212529;
-    font-weight:*old;
-    margin-top:5px;
-}
-
-</styl*>
+ <style>
+    .metric-card {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+        border-left: 5px solid #4CAF50;
+    }
+    .metric-title { font-size: 16px; color: #6c757d; font-weight: bold; }
+    .metric-value { font-size: 28px; color: #212529; font-weight: bold; margin-top: 5px; }
+    </style>
 """, unsafe_allow_html=True)
-```*
+
 
 # ─── DATABASE INITIALIZATION ───
 def init_db():
