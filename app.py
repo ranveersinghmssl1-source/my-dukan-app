@@ -213,8 +213,8 @@ elif current_form == "customers":
                 customers,
                 columns=["ID", "Name", "Phone"]
             )
-            elif current_form == "portal":
-    st.switch_page("customer_app.py")
+           elif current_form == "portal":
+    st.info("Open customer_app.py separately")
 
             st.dataframe(df, use_container_width=True)
         else:
