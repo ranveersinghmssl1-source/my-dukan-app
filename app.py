@@ -218,43 +218,118 @@ elif current_form == "inventory":
 
     st.subheader("📦 Inventory Management")
 
-    with st.form("add_product"):
+    st.markdown("### ➕ Add New Product")
+
+    with st.form("add_product_form"):
+
         barcode = st.text_input("Barcode")
-        name = st.text_input("Product Name")
-        price = st.number_input("Price", min_value=0.0)
-        stock = st.number_input("Stock", min_value=0, step=1)
 
-        submit = st.form_submit_button("Add Product")
+        product_name = st.text_input("Product Name")
 
-        if submit:
-            run_query(
-                """
-                INSERT INTO products
-                (barcode, name, supplier, unit_type, weight_kg, price, stock)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    barcode,
-                    name,
-                    "",
-                    "PCS",
-                    0,
-                    price,
-                    stock
+        unit_type = st.selectbox(
+            "Unit Type",
+            ["PCS", "BOX", "KG"]
+        )
+
+        weight_kg = st.number_input(
+            "Weight (KG)",
+            min_value=0.0,
+            value=0.0,
+            step=0.1
+        )
+
+        price = st.number_input(
+            "Selling Price (₹)",
+            min_value=0.0,
+            value=0.0
+        )
+
+        stock = st.number_input(
+            "Stock Quantity",
+            min_value=0,
+            value=0,
+            step=1
+        )
+
+        supplier = st.text_input("Supplier Name")
+
+        submit_product = st.form_submit_button("✅ Add Product")
+
+        if submit_product:
+
+            if barcode and product_name:
+
+                run_query(
+                    """
+                    INSERT INTO products
+                    (
+                        barcode,
+                        name,
+                        supplier,
+                        unit_type,
+                        weight_kg,
+                        price,
+                        stock
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        barcode,
+                        product_name,
+                        supplier,
+                        unit_type,
+                        weight_kg,
+                        price,
+                        stock
+                    )
                 )
-            )
-            st.success("✅ Product Added")
+
+                st.success("✅ Product Added Successfully")
+
+            else:
+                st.warning("Please Enter Barcode and Product Name")
+
+    st.markdown("---")
+
+    st.markdown("### 📋 Product Inventory")
 
     products = run_query(
-        "SELECT product_id, barcode, name, price, stock FROM products",
+        """
+        SELECT
+            product_id,
+            barcode,
+            name,
+            supplier,
+            unit_type,
+            weight_kg,
+            price,
+            stock
+        FROM products
+        ORDER BY product_id DESC
+        """,
         fetch=True
     )
 
     if products:
+
         df = pd.DataFrame(
             products,
-            columns=["ID", "Barcode", "Name", "Price", "Stock"]
+            columns=[
+                "ID",
+                "Barcode",
+                "Product Name",
+                "Supplier",
+                "Unit",
+                "Weight(KG)",
+                "Price",
+                "Stock"
+            ]
         )
-        st.dataframe(df, use_container_width=True)
+
+        st.dataframe(
+            df,
+            use_container_width=True
+        )
+
     else:
         st.warning("No products available")
