@@ -198,7 +198,7 @@ elif current_form == "customers":
                     "INSERT INTO customers (name, phone) VALUES (?, ?)",
                     (name, phone)
                 )
-                st.success("Customer Added Successfully")
+                st.success("✅ Customer Added Successfully")
             else:
                 st.warning("Please enter Name and Mobile Number")
 
@@ -213,4 +213,6 @@ elif current_form == "customers":
                 customers,
                 columns=["ID", "Name", "Phone"]
             )
-          
+            st.dataframe(df, use_container_width=True)
+        else:
+            st.info("No customers found")
