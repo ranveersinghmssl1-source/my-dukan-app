@@ -81,37 +81,171 @@ current_form = standard_menu[choice_idx]
 st.title(_title)
 st.markdown("---")
 
-# ─── 1. DASHBOARD SCREEN ───
+# ─── DASHBOARD SCREEN ───
+
 if current_form == "dashboard":
-    if lang_choice == "Hindi":
-        st.subheader("📊 दुकान की लाइव कमाई और रिपोर्ट्स")
-        l_sales, l_cash, l_udhaar = "💰 कुल बिक्री (नकद + उधार)", "💵 कुल प्राप्त नकद", "📉 कुल मार्केट उधार"
-    else:
-        st.subheader("📊 Dukan Live Summary & Reports")
-        l_sales, l_cash, l_udhaar = "💰 Total Sales (Cash + Balance)", "💵 Total Cash Received", "📉 Total Market Udhaar (Balance)"
 
-    # Data Fetching
-    t_sales = run_query("SELECT SUM(total_amount) FROM bills", fetch=True)[0][0] or 0.0
-    c_sales = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode = 'Cash'", fetch=True)[0][0] or 0.0
-    u_sales = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode LIKE '%Udhaar%'", fetch=True)[0][0] or 0.0
-    
-    # Modern UI UI Cards
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown(f'<div class="metric-card"><div class="metric-title">{l_sales}</div><div class="metric-value">₹{t_sales:,.2f}</div></div>', unsafe_allow_html=True)
-    with col2:
-        st.markdown(f'<div class="metric-card" style="border-left-color: #2196F3;"><div class="metric-title">{l_cash}</div><div class="metric-value">₹{c_sales:,.2f}</div></div>', unsafe_allow_html=True)
-    with col3:
-        st.markdown(f'<div class="metric-card" style="border-left-color: #f44336;"><div class="metric-title">{l_udhaar}</div><div class="metric-value">₹{u_sales:,.2f}</div></div>', unsafe_allow_html=True)
+    st.subheader("📊 Business Dashboard")
 
-    # Recent Transactions Table
-    st.markdown("### 📋 Recent Transactions / हालिया बिक्री")
-    recent_data = run_query("SELECT bill_no, customer_name, total_amount, payment_mode, bill_date FROM bills ORDER BY bill_no DESC LIMIT 5", fetch=True)
+    # SALES DATA
+
+    t_sales = run_query(
+        "SELECT COALESCE(SUM(total_amount),0) FROM bills",
+        fetch=True
+    )[0][0]
+
+    c_sales = run_query(
+        "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE payment_mode='Cash'",
+        fetch=True
+    )[0][0]
+
+    u_sales = run_query(
+        "SELECT COALESCE(SUM(total_amount),0) FROM bills WHERE payment_mode LIKE '%Udhaar%'",
+        fetch=True
+    )[0][0]
+
+    total_products = run_query(
+        "SELECT COUNT(*) FROM products",
+        fetch=True
+    )[0][0]
+
+    total_customers = run_query(
+        "SELECT COUNT(*) FROM customers",
+        fetch=True
+    )[0][0]
+
+    low_stock = run_query(
+        "SELECT COUNT(*) FROM products WHERE stock < 10",
+        fetch=True
+    )[0][0]
+
+    # TOP METRICS
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+
+    with c1:
+        st.metric(
+            "💰 Total Sales",
+            f"₹{t_sales:,.2f}"
+        )
+
+    with c2:
+        st.metric(
+            "💵 Cash Sale",
+            f"₹{c_sales:,.2f}"
+        )
+
+    with c3:
+        st.metric(
+            "📉 Udhaar",
+            f"₹{u_sales:,.2f}"
+        )
+
+    with c4:
+        st.metric(
+            "📦 Products",
+            total_products
+        )
+
+    with c5:
+        st.metric(
+            "👥 Customers",
+            total_customers
+        )
+
+    st.markdown("---")
+
+    # LOW STOCK ALERT
+
+    if low_stock > 0:
+
+        st.error(
+            f"⚠️ {low_stock} Products Have Low Stock (Less Than 10)"
+        )
+
+    # RECENT SALES
+
+    st.subheader("🧾 Recent Transactions")
+
+    recent_data = run_query(
+        """
+        SELECT
+        bill_no,
+        customer_name,
+        total_amount,
+        payment_mode,
+        bill_date
+        FROM bills
+        ORDER BY bill_no DESC
+        LIMIT 10
+        """,
+        fetch=True
+    )
+
     if recent_data:
-        df = pd.DataFrame(recent_data, columns=["Bill No", "Customer", "Amount", "Mode", "Date"])
-        st.dataframe(df, use_container_width=True)
+
+        df = pd.DataFrame(
+            recent_data,
+            columns=[
+                "Bill No",
+                "Customer",
+                "Amount",
+                "Payment",
+                "Date"
+            ]
+        )
+
+        st.dataframe(
+            df,
+            use_container_width=True
+        )
+
     else:
-        st.info("No transactions recorded yet.")
+
+        st.info(
+            "No Transactions Found"
+        )
+
+    st.markdown("---")
+
+    # LOW STOCK PRODUCTS
+
+    st.subheader("📦 Low Stock Products")
+
+    low_stock_items = run_query(
+        """
+        SELECT
+        name,
+        stock,
+        unit_type
+        FROM products
+        WHERE stock < 10
+        ORDER BY stock ASC
+        """,
+        fetch=True
+    )
+
+    if low_stock_items:
+
+        low_df = pd.DataFrame(
+            low_stock_items,
+            columns=[
+                "Product",
+                "Stock",
+                "Unit"
+            ]
+        )
+
+        st.dataframe(
+            low_df,
+            use_container_width=True
+        )
+
+    else:
+
+        st.success(
+            "✅ All Products Have Sufficient Stock"
+        )
 
 # ─── 2. BILLING SCREEN (PROFESSIONAL VERSION) ───
 elif current_form == "billing":
