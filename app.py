@@ -8,9 +8,7 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 
 # ─── CUSTOM CSS FOR PROFESSIONAL LOOK ───
 st.markdown("""
-    st.markdown("""
-st.markdown("*"
- <style>
+    <style>
     .metric-card {
         background-color: #f8f9fa;
         padding: 20px;
@@ -23,7 +21,6 @@ st.markdown("*"
     .metric-value { font-size: 28px; color: #212529; font-weight: bold; margin-top: 5px; }
     </style>
 """, unsafe_allow_html=True)
-
 
 # ─── DATABASE INITIALIZATION ───
 def init_db():
@@ -84,470 +81,107 @@ current_form = standard_menu[choice_idx]
 st.title(_title)
 st.markdown("---")
 
+# ─── 1. DASHBOARD SCREEN ───
 if current_form == "dashboard":
-
-    st.subheader("📊 Smart Business Intelligence Dashboard")
-
-    # ===== KPI DATA =====
-
-    total_sales = run_query(
-        "SELECT COALESCE(SUM(total_amount),0) FROM bills",
-        fetch=True
-    )[0][0]
-
-    cash_sales = run_query(
-        """
-        SELECT COALESCE(SUM(total_amount),0)
-        FROM bills
-        WHERE payment_mode='Cash'
-        """,
-        fetch=True
-    )[0][0]
-
-    udhaar_sales = run_query(
-        """
-        SELECT COALESCE(SUM(total_amount),0)
-        FROM bills
-        WHERE payment_mode LIKE '%Udhaar%'
-        """,
-        fetch=True
-    )[0][0]
-
-    total_products = run_query(
-        "SELECT COUNT(*) FROM products",
-        fetch=True
-    )[0][0]
-
-    total_customers = run_query(
-        "SELECT COUNT(*) FROM customers",
-        fetch=True
-    )[0][0]
-
-    low_stock = run_query(
-        """
-        SELECT COUNT(*)
-        FROM products
-        WHERE stock < 10
-        """,
-        fetch=True
-    )[0][0]
-
-    # ===== PREMIUM KPI CARDS =====
-
-    c1,c2,c3,c4,c5,c6 = st.columns(6)
-
-    c1.metric(
-        "💰 Total Sales",
-        f"₹{total_sales:,.0f}"
-    )
-
-    c2.metric(
-        "💵 Cash",
-        f"₹{cash_sales:,.0f}"
-    )
-
-    c3.metric(
-        "📉 Udhaar",
-        f"₹{udhaar_sales:,.0f}"
-    )
-
-    c4.metric(
-        "📦 Products",
-        total_products
-    )
-
-    c5.metric(
-        "👥 Customers",
-        total_customers
-    )
-
-    c6.metric(
-        "⚠️ Low Stock",
-        low_stock
-    )
-
-    st.markdown("---")
-
-    # ===== SALES CHART =====
-
-    st.subheader("📈 Sales Trend")
-
-    sales_chart = run_query(
-        """
-        SELECT
-        substr(bill_date,1,10),
-        SUM(total_amount)
-        FROM bills
-        GROUP BY substr(bill_date,1,10)
-        ORDER BY substr(bill_date,1,10)
-        """,
-        fetch=True
-    )
-
-    if sales_chart:
-
-        chart_df = pd.DataFrame(
-            sales_chart,
-            columns=["Date","Sales"]
-        )
-
-        chart_df = chart_df.set_index("Date")
-
-        st.line_chart(chart_df)
-
-    st.markdown("---")
-
-    # ===== LOW STOCK PRODUCTS =====
-
-    st.subheader("⚠️ Low Stock Alert")
-
-    low_stock_items = run_query(
-        """
-        SELECT
-        name,
-        stock,
-        unit_type
-        FROM products
-        WHERE stock < 10
-        ORDER BY stock ASC
-        """,
-        fetch=True
-    )
-
-    if low_stock_items:
-
-        low_df = pd.DataFrame(
-            low_stock_items,
-            columns=[
-                "Product",
-                "Stock",
-                "Unit"
-            ]
-        )
-
-        st.dataframe(
-            low_df,
-            use_container_width=True
-        )
-
+    if lang_choice == "Hindi":
+        st.subheader("📊 दुकान की लाइव कमाई और रिपोर्ट्स")
+        l_sales, l_cash, l_udhaar = "💰 कुल बिक्री (नकद + उधार)", "💵 कुल प्राप्त नकद", "📉 कुल मार्केट उधार"
     else:
+        st.subheader("📊 Dukan Live Summary & Reports")
+        l_sales, l_cash, l_udhaar = "💰 Total Sales (Cash + Balance)", "💵 Total Cash Received", "📉 Total Market Udhaar (Balance)"
 
-        st.success(
-            "✅ All Products Stock Healthy"
-        )
+    # Data Fetching
+    t_sales = run_query("SELECT SUM(total_amount) FROM bills", fetch=True)[0][0] or 0.0
+    c_sales = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode = 'Cash'", fetch=True)[0][0] or 0.0
+    u_sales = run_query("SELECT SUM(total_amount) FROM bills WHERE payment_mode LIKE '%Udhaar%'", fetch=True)[0][0] or 0.0
+    
+    # Modern UI UI Cards
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f'<div class="metric-card"><div class="metric-title">{l_sales}</div><div class="metric-value">₹{t_sales:,.2f}</div></div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown(f'<div class="metric-card" style="border-left-color: #2196F3;"><div class="metric-title">{l_cash}</div><div class="metric-value">₹{c_sales:,.2f}</div></div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown(f'<div class="metric-card" style="border-left-color: #f44336;"><div class="metric-title">{l_udhaar}</div><div class="metric-value">₹{u_sales:,.2f}</div></div>', unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    # ===== TOP SELLING REPORT =====
-
-    st.subheader("🏆 Top Recent Bills")
-
-    recent_data = run_query(
-        """
-        SELECT
-        bill_no,
-        customer_name,
-        total_amount,
-        payment_mode,
-        bill_date
-        FROM bills
-        ORDER BY bill_no DESC
-        LIMIT 10
-        """,
-        fetch=True
-    )
-
+    # Recent Transactions Table
+    st.markdown("### 📋 Recent Transactions / हालिया बिक्री")
+    recent_data = run_query("SELECT bill_no, customer_name, total_amount, payment_mode, bill_date FROM bills ORDER BY bill_no DESC LIMIT 5", fetch=True)
     if recent_data:
-
-        recent_df = pd.DataFrame(
-            recent_data,
-            columns=[
-                "Bill No",
-                "Customer",
-                "Amount",
-                "Payment",
-                "Date"
-            ]
-        )
-
-        st.dataframe(
-            recent_df,
-            use_container_width=True
-        )
-
+        df = pd.DataFrame(recent_data, columns=["Bill No", "Customer", "Amount", "Mode", "Date"])
+        st.dataframe(df, use_container_width=True)
     else:
+        st.info("No transactions recorded yet.")
 
-        st.info(
-            "No Sales Available"
-        )
-
-# ─── 2. BILLING SCREEN (PROFESSIONAL VERSION) ───
+# ─── 2. BILLING SCREEN (AUTOMATIC BARCODE SEARCH) ───
 elif current_form == "billing":
-
-    st.subheader(
-        "🛒 Fast Billing Counter"
-        if lang_choice == "English"
-        else "🛒 फ़ास्ट बिलिंग काउंटर"
-    )
-
-    # CUSTOMER SELECTION
-
-    cust_list = run_query(
-        "SELECT name, phone FROM customers",
-        fetch=True
-    )
-
-    cust_options = (
-        [f"{c[0]} ({c[1]})" for c in cust_list]
-        if cust_list
-        else []
-    )
-
-    cust_options.insert(
-        0,
-        "Walk-in Customer"
-        if lang_choice == "English"
-        else "नया ग्राहक"
-    )
-
-    selected_cust_info = st.selectbox(
-        "Customer / ग्राहक चुनें",
-        cust_options
-    )
-
+    st.subheader("🛒 Fast Billing Counter" if lang_choice == "English" else "🛒 फ़ास्ट बिलिंग काउंटर")
+    
+    # Customer Selection
+    cust_list = run_query("SELECT name, phone FROM customers", fetch=True)
+    cust_options = [f"{c[0]} ({c[1]})" for c in cust_list] if cust_list else []
+    cust_options.insert(0, "Walk-in Customer" if lang_choice == "English" else "नया या अनजान ग्राहक")
+    selected_cust_info = st.selectbox("Customer / ग्राहक चुनें", cust_options)
+    
     if "(" in selected_cust_info:
-
         parts = selected_cust_info.split(" (")
-
         c_name = parts[0]
         c_phone = parts[1].replace(")", "")
-
     else:
-
         c_name = "Walk-in"
         c_phone = "0000000000"
 
-    st.markdown("---")
+    # 🎯 AUTOMATIC BARCODE INPUT BOX (बिना बटन के काम करेगा)
+    barcode_input = st.text_input("🔍 SCAN BARCODE HERE / यहाँ बारकोड स्कैन करें", key="bill_barcode", autocomplete="off").strip()
 
-    # BARCODE SCANNER
-
-    barcode_input = st.text_input(
-        "🔍 Scan Barcode",
-        key="bill_barcode"
-    ).strip()
-
+    # बारकोड बॉक्स में कुछ भी लिखते ही या स्कैन होते ही यह कोड अपने आप बैकग्राउंड में एक्टिव हो जाएगा
     if barcode_input:
-
-        res = run_query(
-            """
-            SELECT
-            product_id,
-            name,
-            price,
-            stock,
-            unit_type,
-            weight_kg
-            FROM products
-            WHERE barcode = ?
-            """,
-            (barcode_input,),
-            fetch=True
-        )
-
+        res = run_query("SELECT product_id, name, price, stock, unit_type, weight_kg FROM products WHERE barcode = ?", (barcode_input,), fetch=True)
         if res:
-
+            # अगर डेटाबेस में बारकोड मिल गया, तो उसे session_state में सेव कर लें
             st.session_state.active_prod = res[0]
-
         else:
-
             st.session_state.active_prod = None
+            st.error("❌ Barcode Not Found! / यह बारकोड इन्वेंट्री में नहीं मिला!")
 
-            st.error(
-                "❌ Barcode Not Found"
-            )
-
-    # PRODUCT LIST
-
-    prod_list = run_query(
-        """
-        SELECT
-        product_id,
-        name,
-        price,
-        stock,
-        unit_type,
-        weight_kg
-        FROM products
-        WHERE stock > 0
-        """,
-        fetch=True
-    )
-
+    # अगर मैन्युअली भी सर्च करना हो तो बैकअप ऑप्शन
+    prod_list = run_query("SELECT product_id, name, price, stock, unit_type, weight_kg FROM products WHERE stock > 0", fetch=True)
+    
     if not prod_list:
-
-        st.warning(
-            "⚠️ Inventory empty. Please add products first."
-        )
-
+        st.warning("Inventory empty! Please add products first.")
     else:
-
-        if (
-            "active_prod" not in st.session_state
-            or st.session_state.active_prod is None
-        ):
-
-            prod_dict = {
-                p[1]: p
-                for p in prod_list
-            }
-
-            search_prod = st.selectbox(
-                "Search Product",
-                list(prod_dict.keys())
-            )
-
-            st.session_state.active_prod = (
-                prod_dict[search_prod]
-            )
-
+        # अगर बारकोड से सामान नहीं मिला है, तभी मैन्युअल ड्रॉपडाउन दिखाएं
+        if "active_prod" not in st.session_state or st.session_state.active_prod is None:
+            prod_dict = {p[1]: p for p in prod_list}
+            search_prod = st.selectbox("Or Search by Name / या नाम से चुनें", list(prod_dict.keys()))
+            st.session_state.active_prod = prod_dict[search_prod]
+            
+        # सामान की जानकारी दिखाना
         if st.session_state.active_prod:
-
-            (
-                p_id,
-                p_name,
-                current_price,
-                available_stock,
-                u_type,
-                w_kg
-            ) = st.session_state.active_prod
-
-            # PRODUCT CARDS
-
-            c1, c2, c3 = st.columns(3)
-
-            with c1:
-                st.metric(
-                    "📦 Product",
-                    p_name
-                )
-
-            with c2:
-                st.metric(
-                    "💰 Price",
-                    f"₹{current_price}"
-                )
-
-            with c3:
-                st.metric(
-                    "📊 Stock",
-                    f"{available_stock} {u_type}"
-                )
-
-            qty = st.number_input(
-                "Quantity",
-                min_value=1,
-                max_value=max(
-                    1,
-                    int(available_stock)
-                ),
-                value=1
-            )
-
-            total_price = qty * current_price
-
-            # GRAND TOTAL CARD
-
-            st.markdown(
-                f"""
-                <div style="
-                background:#16a34a;
-                padding:20px;
-                border-radius:12px;
-                text-align:center;
-                color:white;
-                margin-top:10px;">
-                <h3>Grand Total</h3>
-                <h1>₹{total_price:,.2f}</h1>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            pay_mode = st.radio(
-                "Payment Mode",
-                [
-                    "Cash",
-                    "Udhaar (Balance)"
-                ],
-                horizontal=True
-            )
-
-            disabled_btn = (
-                pay_mode == "Udhaarance)"
-                and c_name == "Walk-in"
-            )
-
+            p_id, p_name, current_price, available_stock, u_type, w_kg = st.session_state.active_prod
+            st.info(f"🎯 Item Found: **{p_name}** | Price: ₹{current_price} | Stock: {available_stock} {u_type} ({w_kg} KG)")
+            
+            qty = st.number_input("Quantity / मात्रा", min_value=1, max_value=int(available_stock), value=1)
+            total_price = current_price * qty
+            st.markdown(f"### **Grand Total: ₹{total_price:,.2f}**")
+            
+            pay_mode = st.radio("Payment Mode", ["Cash", "Udhaar (Balance)"], horizontal=True)
+            
+            disabled_btn = True if pay_mode == "Udhaar (Balance)" and c_name == "Walk-in" else False
             if disabled_btn:
-
-                st.warning(
-                    "⚠️ Walk-in customer cannot use Udhaar"
-                )
-
-            if st.button(
-                "🖨️ Generate Bill",
-                disabled=disabled_btn,
-                type="primary"
-            ):
-
-                # UPDATE STOCK
-
-                run_query(
-                    """
-                    UPDATE products
-                    SET stock = ?
-                    WHERE product_id = ?
-                    """,
-                    (
-                        available_stock - qty,
-                        p_id
-                    )
-                )
-
-                # SAVE BILL
-
-                run_query(
-                    """
-                    INSERT INTO bills
-                    (
-                        customer_name,
-                        customer_phone,
-                        total_amount,
-                        payment_mode,
-                        bill_date
-                    )
-                    VALUES
-                    (?, ?, ?, ?, ?)
-                    """,
-                    (
-                        c_name,
-                        c_phone,
-                        total_price,
-                        pay_mode,
-                        datetime.now().strftime(
-                            "%Y-%m-%d %H:%M:%S"
-                        )
-                    )
-                )
-
-                st.success(
-                    "🎉 Bill Generated Successfully!"
-                )
-
+                st.warning("⚠️ Walk-in customers cannot take Udhaar. Please select a registered customer.")
+                
+            if st.button("🖨️ Generate Bill", disabled=disabled_btn, type="primary"):
+                # स्टॉक कम करना और बिल सेव करना
+                run_query("UPDATE products SET stock = ? WHERE product_id = ?", (available_stock - qty, p_id))
+                run_query("INSERT INTO bills (customer_name, customer_phone, total_amount, payment_mode, bill_date) VALUES (?, ?, ?, ?, ?)", 
+                          (c_name, c_phone, total_price, pay_mode, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                st.success("🎉 Bill Generated Successfully!")
+                
+                # अगले स्कैन के लिए बारकोड इनपुट और एक्टिव प्रोडक्ट को साफ़ करना
                 st.session_state.active_prod = None
-
                 st.balloons()
 
-                st.rerun()
 elif current_form == "customers":
 
     st.subheader("👥 Customers Management")
