@@ -8,23 +8,67 @@ st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="w
 
 # ─── CUSTOM CSS FOR PROFESSIONAL LOOK ───
 st.markdown("""
-    <style>
-    .metric-card {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        text-align: center;
-        border-left: 5px solid #4CAF50;
-    }
-    .metric-title { font-size: 16px; color: #6c757d; font-weight: bold; }
-    .metric-value { font-size: 28px; color: #212529; font-weight: bold; margin-top: 5px; }
     st.markdown("""
-  
+<style>
 
-</style>
-""",
-unsafe_allow_html=True)
+/* Main App */
+.stApp{
+    background-color:#f5f7fb;
+}
+
+/* KPI Cards */
+.metric*card{
+    background:white;
+    pa*ding:20px;
+    border-radius:15px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    text-align:center;
+    border-left:6px solid #28a745;
+}
+
+.metric-title{
+    font-size:15px;
+    color:#6b7280;
+    font-weight:600;
+}
+
+.metric-value{
+    font-size:30px;
+    color:#111827;
+    font-weight:700;
+    margin-top:5px;
+}
+
+/* Streamlit Metric */
+[data-testid="metric-container"]*
+    background:white;
+    padding*15px;
+    border-radius:12px;
+    *ox-shadow:0 *px 8px rgba(0,0*0,0.08);
+}
+
+/* Tables */
+[data-testid="stDataFrame"]{
+    border-radius:12px;
+    overflow:hidden;
+}
+
+/* Button */
+.stButton button{
+    width:100%;
+    border-radius:10px;
+    height:45px;
+    font-weight:bold;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"]{
+    background:#ffffff;
+}
+
+</st*le>
+""", unsafe_allow_html=True)
+`*
 
 # ─── DATABASE INITIALIZATION ───
 def init_db():
