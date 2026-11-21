@@ -388,7 +388,90 @@ elif current_form == "billing":
         st.info(
             "No Products Added In Bill"
         )
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT,
+    role TEXT
+)
+""")
 
+cursor.execute("""
+INSERT OR IGNORE INTO users
+(username,password,role)
+VALUES
+('admin','admin123','Admin')
+""")
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    # LANGUAGE SELECTION
+lang_choice = st.sidebar.selectbox(...)
+if not st.session_state.logged_in:
+
+    st.title("🔐 My Dukan PRO Login")
+
+    username = st.text_input("User Name")
+
+    password = st.text_input(
+        "Password",
+        type="password"
+    )
+
+    if st.button(
+        "Login",
+        type="primary"
+    ):
+
+        user = run_query(
+            """
+            SELECT username, role
+            FROM users
+            WHERE username = ?
+            AND password = ?
+            """,
+            (
+                username,
+                password
+            ),
+            fetch=True
+        )
+
+        if user:
+
+            st.session_state.logged_in = True
+            st.session_state.username = user[0][0]
+            st.session_state.role = user[0][1]
+
+            st.rerun()
+
+        else:
+
+            st.error(
+                "Invalid Username or Password"
+            )
+
+    st.stop()
+    st.sidebar.markdown("---")
+
+st.sidebar.success(
+    f"👤 {st.session_state.username}"
+)
+
+st.sidebar.write(
+    f"Role : {st.session_state.role}"
+)
+if st.sidebar.button("🚪 Logout"):
+
+    st.session_state.logged_in = False
+
+    if "username" in st.session_state:
+        del st.session_state["username"]
+
+    if "role" in st.session_state:
+        del st.session_state["role"]
+
+    st.rerun()
 elif current_form == "customers":
 
     st.subheader("👥 Customers Management")
