@@ -3,41 +3,23 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 
-# PAGE CONFIGURATION
+# ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
 # ─── CUSTOM CSS FOR PROFESSIONAL LOOK ───
 st.markdown("""
-<style>
-.metric-card{
-    background:#ffffff;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.08);
-    text-align:center;
-    border-left:6px solid #16a34a;
-}
-
-.metric-title{
-    font-size:15px;
-    color:#6b7280;
-    font-weight:600;
-}
-
-.metric-value{
-    font-size:30px;
-    font-weight:700;
-    color:#111827;
-}
-
-[data-testid="metric-container"]{
-    background:white;
-    border-radius:12px;
-    padding:15px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.08);
-}
-</style>
-
+    <style>
+    .metric-card {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+        border-left: 5px solid #4CAF50;
+    }
+    .metric-title { font-size: 16px; color: #6c757d; font-weight: bold; }
+    .metric-value { font-size: 28px; color: #212529; font-weight: bold; margin-top: 5px; }
+    </style>
 """, unsafe_allow_html=True)
 
 # ─── DATABASE INITIALIZATION ───
@@ -247,10 +229,10 @@ elif current_form == "billing":
             or st.session_state.active_prod is None
         ):
 
-           prod_dict = {
-    p[1]: p
-    for p in prod_list
-}
+            prod_dict = {
+                pp
+                for p in prod_list
+            }
 
             search_prod = st.selectbox(
                 "Search Product",
@@ -437,49 +419,6 @@ elif current_form == "inventory":
     st.subheader("📦 Inventory Management")
 
     st.markdown("### ➕ Add New Product")
-        products = run_query(
-        """
-        SELECT
-            product_id,
-            barcode,
-            name,
-            supplier,
-            unit_type,
-            weight_kg,
-            price,
-            stock
-        FROM products
-        ORDER BY product_id DESC
-        """,
-        fetch=True
-    )
-
-    if products:
-
-        df = pd.DataFrame(
-            products,
-            columns=[
-                "ID",
-                "Barcode",
-                "Product",
-                "Supplier",
-                "Unit",
-                "Weight",
-                "Price",
-                "Stock"
-            ]
-        )
-
-        st.dataframe(
-            df,
-            use_container_width=True
-        )
-
-    else:
-
-        st.warning(
-            "No Products Available"
-        )
 
     with st.form("add_product_form"):
 
