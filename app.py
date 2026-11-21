@@ -3,7 +3,7 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 
-# ─── PAGE CONFIGURATION ───
+# PAGE CONFIGURATION
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
 # ─── CUSTOM CSS FOR PROFESSIONAL LOOK ───
@@ -37,7 +37,9 @@ st.markdown("""
     box-shadow:0 2px 8px rgba(0,0,0,0.08);
 }
 </style>
+
 """, unsafe_allow_html=True)
+
 # ─── DATABASE INITIALIZATION ───
 def init_db():
     with sqlite3.connect('dukan_ultimate_v1.db') as conn:
@@ -245,10 +247,10 @@ elif current_form == "billing":
             or st.session_state.active_prod is None
         ):
 
-            prod_dict = {
-                pp
-                for p in prod_list
-            }
+           prod_dict = {
+    p[1]: p
+    for p in prod_list
+}
 
             search_prod = st.selectbox(
                 "Search Product",
@@ -435,6 +437,49 @@ elif current_form == "inventory":
     st.subheader("📦 Inventory Management")
 
     st.markdown("### ➕ Add New Product")
+        products = run_query(
+        """
+        SELECT
+            product_id,
+            barcode,
+            name,
+            supplier,
+            unit_type,
+            weight_kg,
+            price,
+            stock
+        FROM products
+        ORDER BY product_id DESC
+        """,
+        fetch=True
+    )
+
+    if products:
+
+        df = pd.DataFrame(
+            products,
+            columns=[
+                "ID",
+                "Barcode",
+                "Product",
+                "Supplier",
+                "Unit",
+                "Weight",
+                "Price",
+                "Stock"
+            ]
+        )
+
+        st.dataframe(
+            df,
+            use_container_width=True
+        )
+
+    else:
+
+        st.warning(
+            "No Products Available"
+        )
 
     with st.form("add_product_form"):
 
