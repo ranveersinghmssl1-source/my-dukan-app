@@ -532,3 +532,25 @@ elif current_form == "inventory":
 
     else:
         st.warning("No products available")
+import shutil
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("💾 Backup")
+
+if st.sidebar.button("📥 Download Database Backup"):
+
+    backup_file = "dukan_backup.db"
+
+    shutil.copy(
+        "dukan_ultimate_v1.db",
+        backup_file
+    )
+
+    with open(backup_file, "rb") as file:
+
+        st.sidebar.download_button(
+            label="⬇️ Download Backup",
+            data=file,
+            file_name=backup_file,
+            mime="application/octet-stream"
+        )
