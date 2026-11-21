@@ -3,6 +3,51 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    if not st.session_state.logged_in:
+
+    st.title("🔐 My Dukan PRO Login")
+
+    username = st.text_input("User Name")
+    password = st.text_input(
+        "Password",
+        type="password"
+    )
+
+    if st.button("Login", type="primary"):
+
+        user = run_query(
+            """
+            SELECT username, role
+            FROM users
+            WHERE username = ?
+            AND password = ?
+            """,
+            (
+                username,
+                password
+            ),
+            fetch=True
+        )
+
+        if user:
+
+            st.session_state.logged_in = True
+            st.session_state.username = user[0][0]
+            st.session_state.role = user[0][1]
+
+            st.success("✅ Login Successful")
+
+            st.rerun()
+
+        else:
+
+            st.error(
+                "❌ Invalid Username or Password"
+            )
+
+    st.stop()
 # ─── PAGE CONFIGURATION ───
 st.set_page_config(page_title="My Dukan App Pro", page_icon="🛍️", layout="wide")
 
