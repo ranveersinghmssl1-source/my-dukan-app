@@ -115,6 +115,22 @@ if not st.session_state.logged_in:
             )
 
     st.stop()
+
+# ─── LANGUAGE SELECTION ───
+lang_choice = st.sidebar.selectbox("🌐 Choose Language / भाषा चुनें", ["English", "Hindi"])
+standard_menu = ["dashboard", "billing", "inventory", "customers", "portal"]
+
+if lang_choice == "Hindi":
+    display_menu = ["📊 डैशबोर्ड", "🛒 बिलिंग काउंटर", "📦 स्टॉक गोदाम (Inventory)", "👥 ग्राहक खाता (Customers)", "🔐 ग्राहक लॉगिन पोर्टल"]
+    _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर मैनेजमेंट"
+else:
+    display_menu = ["📊 Dashboard", "🛒 Billing Form", "📦 Inventory (Stock)", "👥 Customers Management", "🔐 Customer Login Portal"]
+    _title = "🏬 My Dukan PRO - Digital Store Management"
+
+# ─── SIDEBAR NAVIGATION ───
+choice_display = st.sidebar.selectbox("Menu Navigation / मेनू चुनें", display_menu, key="main_navigation_bar")
+choice_idx = display_menu.index(choice_display)
+current_form = standard_menu[choice_idx]
 st.sidebar.markdown("---")
 
 st.sidebar.success(
@@ -136,22 +152,6 @@ if st.sidebar.button("🚪 Logout"):
     )
 
     st.rerun()
-# ─── LANGUAGE SELECTION ───
-lang_choice = st.sidebar.selectbox("🌐 Choose Language / भाषा चुनें", ["English", "Hindi"])
-standard_menu = ["dashboard", "billing", "inventory", "customers", "portal"]
-
-if lang_choice == "Hindi":
-    display_menu = ["📊 डैशबोर्ड", "🛒 बिलिंग काउंटर", "📦 स्टॉक गोदाम (Inventory)", "👥 ग्राहक खाता (Customers)", "🔐 ग्राहक लॉगिन पोर्टल"]
-    _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर मैनेजमेंट"
-else:
-    display_menu = ["📊 Dashboard", "🛒 Billing Form", "📦 Inventory (Stock)", "👥 Customers Management", "🔐 Customer Login Portal"]
-    _title = "🏬 My Dukan PRO - Digital Store Management"
-
-# ─── SIDEBAR NAVIGATION ───
-choice_display = st.sidebar.selectbox("Menu Navigation / मेनू चुनें", display_menu, key="main_navigation_bar")
-choice_idx = display_menu.index(choice_display)
-current_form = standard_menu[choice_idx]
-
 st.title(_title)
 st.markdown("---")
 
