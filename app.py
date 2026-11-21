@@ -120,7 +120,11 @@ elif current_form == "billing":
 
     st.subheader("🛒 Fast Billing Counter")
 
-    # Customer List
+    # Session Cart
+    if "cart" not in st.session_state:
+        st.session_state.cart = []
+
+    # Customer Selection
 
     cust_list = run_query(
         "SELECT name, phone FROM customers",
@@ -136,23 +140,27 @@ elif current_form == "billing":
         ]
 
     selected_customer = st.selectbox(
-        "👤 Select Customer",
+        "👤 Customer",
         cust_options
     )
 
     if "(" in selected_customer:
+
         parts = selected_customer.split(" (")
+
         c_name = parts[0]
         c_phone = parts[1].replace(")", "")
+
     else:
+
         c_name = "Walk-in"
         c_phone = "0000000000"
 
     st.markdown("---")
 
-    # Load Products
+    # Product List
 
-    prod_list = run_query(
+    products = run_query(
         """
         SELECT
             product_id,
@@ -160,88 +168,137 @@ elif current_form == "billing":
             name,
             price,
             stock,
-            unit_type,
-            weight_kg
+            unit_type
         FROM products
         WHERE stock > 0
         """,
         fetch=True
     )
 
-    if not prod_list:
+    if not products:
 
         st.warning(
-            "⚠️ Inventory empty. Please add products first."
+            "⚠️ Inventory Empty. Please Add Products."
         )
 
     else:
 
-        # Product Dropdown
-
-        prod_dict = {
+        product_dict = {
             p[2]: p
-            for p in prod_list
+            for p in products
         }
 
         selected_product = st.selectbox(
             "📦 Select Product",
-            list(prod_dict.keys())
+            list(product_dict.keys())
         )
 
         (
             p_id,
             barcode,
             p_name,
-            current_price,
-            available_stock,
-            u_type,
-            w_kg
-        ) = prod_dict[selected_product]
-
-        # Product Cards
+            price,
+            stock,
+            unit_type
+        ) = product_dict[selected_product]
 
         col1, col2, col3 = st.columns(3)
 
         with col1:
             st.metric(
-                "📦 Product",
-                p_name
+                "Price",
+                f"₹{price:,.2f}"
             )
 
         with col2:
             st.metric(
-                "💰 Price",
-                f"₹{current_price:,.2f}"
+                "Stock",
+                f"{stock} {unit_type}"
             )
 
         with col3:
             st.metric(
-                "📊 Stock",
-                f"{available_stock} {u_type}"
+                "Unit",
+                unit_type
             )
 
         qty = st.number_input(
             "Quantity",
             min_value=1,
-            max_value=int(available_stock),
+            max_value=int(stock),
             value=1
         )
 
-        total_price = qty * current_price
+        if st.button("➕ Add To Bill"):
 
-        # Total Box
+            item_exists = False
+
+            for item in st.session_state.cart:
+
+                if item["product_id"] == p_id:
+
+                    item["qty"] += qty
+                    item["total"] = (
+                        item["qty"]
+                        * item["price"]
+                    )
+
+                    item_exists = True
+                    break
+
+            if not item_exists:
+
+                st.session_state.cart.append(
+                    {
+                        "product_id": p_id,
+                        "barcode": barcode,
+                        "name": p_name,
+                        "price": price,
+                        "qty": qty,
+                        "unit": unit_type,
+                        "total": price * qty
+                    }
+                )
+
+            st.success(
+                f"{p_name} Added To Bill"
+            )
+
+            st.rerun()
+
+    # Cart Items
+
+    st.markdown("---")
+    st.subheader("🧾 Current Bill")
+
+    if st.session_state.cart:
+
+        cart_df = pd.DataFrame(
+            st.session_state.cart
+        )
+
+        st.dataframe(
+            cart_df,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        grand_total = sum(
+            item["total"]
+            for item in st.session_state.cart
+        )
 
         st.markdown(
             f"""
             <div style="
             background:#16a34a;
             padding:20px;
-            border-radius:12px;
-            color:white;
+            border-radius:15px;
             text-align:center;
+            color:white;
             ">
-            <h3>Grand Total</h3>
-            <h1>₹ {total_price:,.2f}</h1>
+                <h2>Grand Total</h2>
+                <h1>₹ {grand_total:,.2f}</h1>
             </div>
             """,
             unsafe_allow_html=True
@@ -249,62 +306,90 @@ elif current_form == "billing":
 
         pay_mode = st.radio(
             "💳 Payment Mode",
-            ["Cash", "Udhaar (Balance)"],
+            [
+                "Cash",
+                "Udhaar (Balance)"
+            ],
             horizontal=True
         )
 
-        bill_btn = st.button(
-            "🖨️ Generate Bill",
-            type="primary"
-        )
+        col1, col2 = st.columns(2)
 
-        if bill_btn:
+        with col1:
 
-            # Update Stock
+            if st.button(
+                "🗑️ Clear Bill",
+                use_container_width=True
+            ):
 
-            run_query(
-                """
-                UPDATE products
-                SET stock = ?
-                WHERE product_id = ?
-                """,
-                (
-                    available_stock - qty,
-                    p_id
-                )
-            )
+                st.session_state.cart = []
+                st.rerun()
 
-            # Save Bill
+        with col2:
 
-            run_query(
-                """
-                INSERT INTO bills
-                (
-                    customer_name,
-                    customer_phone,
-                    total_amount,
-                    payment_mode,
-                    bill_date
-                )
-                VALUES
-                (?, ?, ?, ?, ?)
-                """,
-                (
-                    c_name,
-                    c_phone,
-                    total_price,
-                    pay_mode,
-                    datetime.now().strftime(
-                        "%Y-%m-%d %H:%M:%S"
+            if st.button(
+                "🖨️ Generate Final Bill",
+                type="primary",
+                use_container_width=True
+            ):
+
+                # Save Bill
+
+           run_query(
+                    """
+                    INSERT INTO bills
+                    (
+                        customer_name,
+                        customer_phone,
+                        total_amount,
+                        payment_mode,
+                        bill_date
+                    )
+                    VALUES
+                    (?, ?, ?, ?, ?)
+                    """,
+                    (
+                        c_name,
+                        c_phone,
+                        grand_total,
+                        pay_mode,
+                        datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        )
                     )
                 )
-            )
 
-            st.success(
-                f"✅ Bill Generated Successfully | Total ₹{total_price:,.2f}"
-            )
+                # Update Stock
 
-            st.balloons           st.rerun()
+                for item in st.session_state.cart:
+
+                    run_query(
+                        """
+                        UPDATE products
+                        SET stock = stock - ?
+                        WHERE product_id = ?
+                        """,
+                        (
+                            item["qty"],
+                            item["product_id"]
+                        )
+                    )
+
+                st.success(
+                    f"✅ Bill Generated Successfully | Total ₹{grand_total:,.2f}"
+                )
+
+                st.balloons()
+
+                st.session_state.cart = []
+
+                st.rerun()
+
+    else:
+
+        st.info(
+            "No Products Added In Bill"
+        )
 
 elif current_form == "customers":
 
