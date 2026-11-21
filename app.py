@@ -825,77 +825,99 @@ elif current_form == "users":
 
         # CREATE USER
 
-        username = st.text_input("User ID")
+username = st.text_input("User ID")
 
-        password = st.text_input(
-            "Password",
-            type="password"
+password = st.text_input(
+    "Password",
+    type="password"
+)
+
+role = st.selectbox(
+    "Role",
+    [
+        "Admin",
+        "Operator",
+        "Store",
+        "Supervisor"
+    ]
+)
+
+st.markdown("### Access Rights")
+
+dashboard_access = st.checkbox("Dashboard")
+billing_access = st.checkbox("Billing")
+inventory_access = st.checkbox("Inventory")
+customers_access = st.checkbox("Customers")
+portal_access = st.checkbox("Customer Portal")
+users_access = st.checkbox("User Authorization")
+
+if st.button("✅ Create User"):
+
+    if not username or not password:
+
+        st.error("Please enter User ID and Password")
+
+    else:
+
+        existing_user = run_query(
+            """
+            SELECT *
+            FROM users
+            WHERE username = ?
+            """,
+            (username,),
+            fetch=True
         )
 
-        role = st.selectbox(
-            "Role",
-            [
-                "Admin",
-                "Operator",
-                "Store",
-                "Supervisor"
-            ]
-        )
+        if existing_user:
 
-        st.markdown("### Access Rights")
+            st.error("❌ User Already Exists")
 
-        dashboard_access = st.checkbox("Dashboard")
-        billing_access = st.checkbox("Billing")
-        inventory_access = st.checkbox("Inventory")
-        customers_access = st.checkbox("Customers")
-        portal_access = st.checkbox("Customer Portal")
-        users_access = st.checkbox("User Authorization")
+        else:
 
-        if st.button("✅ Create User"):
+            result = run_query(
+                """
+                INSERT INTO users
+                (
+                    username,
+                    password,
+                    role,
+                    dashboard_access,
+                    billing_access,
+                    inventory_access,
+                    customers_access,
+                    portal_access,
+                    users_access
+                )
+                VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    username,
+                    password,
+                    role,
+                    int(dashboard_access),
+                    int(billing_access),
+                    int(inventory_access),
+                    int(customers_access),
+                    int(portal_access),
+                    int(users_access)
+                )
+            )
 
-    st.write("Button Clicked")
+            if result:
 
-    result = run_query(
-        """
-        INSERT INTO users
-        (
-            username,
-            password,
-            role,
-            dashboard_access,
-            billing_access,
-            inventory_access,
-            customers_access,
-            portal_access,
-            users_access
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            username,
-            password,
-            role,
-            int(dashboard_access),
-            int(billing_access),
-            int(inventory_access),
-            int(customers_access),
-            int(portal_access),
-            int(users_access)
-        )
-    )
+                st.success(
+                    "✅ User Created Successfully"
+                )
 
-    st.write("Result =", result)
+                st.rerun()
 
-    users_check = run_query(
-        "SELECT * FROM users",
-        fetch=True
-    )
+            else:
 
-    st.write(users_check)
-
-    if result:
-        st.success("✅ User Created Successfully")
-        st.rerun()
+                st.error(
+                    "❌ Failed To Create User"
+                )
 
             except Exception as e:
 
