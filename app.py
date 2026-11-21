@@ -113,9 +113,10 @@ def init_db():
 
         conn.commit()
 
-# Initialize Database
 
+# Initialize Database
 init_db()
+
 
 def run_query(query, params=(), fetch=False):
 
@@ -132,12 +133,13 @@ def run_query(query, params=(), fetch=False):
 
             conn.commit()
 
+            return True
+
         except Exception as e:
 
             st.error(f"Database Error: {e}")
 
             return None
-
 
 # LOGIN SYSTEM YAHA SE START HOGA
 
