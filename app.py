@@ -25,6 +25,16 @@ st.markdown("""
 
 # ─── DATABASE INITIALIZATION ───
 
+# RUN ONLY ONE TIME
+
+with sqlite3.connect("dukan_ultimate_v1.db") as conn:
+
+    cursor = conn.cursor()
+
+    cursor.execute("DROP TABLE IF EXISTS users")
+
+    conn.commit()
+
 def init_db():
 
     with sqlite3.connect("dukan_ultimate_v1.db") as conn:
