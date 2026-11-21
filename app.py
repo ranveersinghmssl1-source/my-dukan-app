@@ -647,17 +647,11 @@ elif current_form == "portal":
 
     st.subheader("🔐 Customer Portal")
 
-    st.info(
-        "Customer Portal Under Development"
-    )
-
-    st.markdown("### Customer Login")
-
     mobile = st.text_input(
-        "Mobile Number"
+        "Enter Mobile Number"
     )
 
-    if st.button("Login"):
+    if st.button("View Account"):
 
         customer = run_query(
             """
@@ -674,8 +668,80 @@ elif current_form == "portal":
         if customer:
 
             st.success(
-                f"Welcome {customer[0][0]}"
+                f"Customer : {customer[0][0]}"
             )
+
+            bills = run_query(
+                """
+                SELECT
+                bill_no,
+                total_amount,
+                payment_mode,
+                bill_date
+                FROM bills
+                WHERE customer_phone = ?
+                ORDER BY bill_no DESC
+                """,
+                (mobile,),
+                fetch=True
+            )
+
+            if bills:
+
+                df = pd.DataFrame(
+                    bills,
+                    columns=[
+                        "Bill No",
+                        "Amount",
+                        "Payment",
+                        "Date"
+                    ]
+                )
+
+                st.dataframe(
+                    df,
+                    use_container_width=True
+                )
+
+                total_purchase = df[
+                    "Amount"
+                ].sum()
+
+                total_udhaar = df[
+                    df["Payment"] ==
+                    "Udhaar (Balance)"
+                ]["Amount"].sum()
+
+                total_cash = df[
+                    df["Payment"] ==
+                    "Cash"
+                ]["Amount"].sum()
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.metric(
+                        "Total Purchase",
+                        f"₹{total_purchase:,.2f}"
+                    )
+
+                with col2:
+                    st.metric(
+                        "Cash Paid",
+                        f"₹{total_cash:,.2f}"
+                    )
+
+                with col3:
+                    st.metric(
+                        "Udhaar",
+                        f"₹{total_udhaar:,.2f}"
+                    )
+
+            else:
+
+                st.info(
+                    "No Purchase History Found"
+                )
 
         else:
 
