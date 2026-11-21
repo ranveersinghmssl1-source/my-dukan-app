@@ -161,7 +161,14 @@ if not st.session_state.logged_in:
 
 # ─── LANGUAGE SELECTION ───
 lang_choice = st.sidebar.selectbox("🌐 Choose Language / भाषा चुनें", ["English", "Hindi"])
-standard_menu = ["dashboard", "billing", "inventory", "customers", "portal""users"]
+standard_menu = [
+    "dashboard",
+    "billing",
+    "inventory",
+    "customers",
+    "portal",
+    "users"
+]
 
 if lang_choice == "Hindi":
 
