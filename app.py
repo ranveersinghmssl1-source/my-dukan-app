@@ -815,9 +815,7 @@ elif current_form == "users":
 
     if st.session_state.get("role") != "Admin":
 
-        st.error(
-            "⛔ Only Admin Can Access This Page"
-        )
+        st.error("⛔ Only Admin Can Access This Page")
 
     else:
 
@@ -825,103 +823,95 @@ elif current_form == "users":
 
         # CREATE USER
 
-username = st.text_input("User ID")
+        username = st.text_input("User ID")
 
-password = st.text_input(
-    "Password",
-    type="password"
-)
-
-role = st.selectbox(
-    "Role",
-    [
-        "Admin",
-        "Operator",
-        "Store",
-        "Supervisor"
-    ]
-)
-
-st.markdown("### Access Rights")
-
-dashboard_access = st.checkbox("Dashboard")
-billing_access = st.checkbox("Billing")
-inventory_access = st.checkbox("Inventory")
-customers_access = st.checkbox("Customers")
-portal_access = st.checkbox("Customer Portal")
-users_access = st.checkbox("User Authorization")
-
-if st.button("✅ Create User"):
-
-    if not username or not password:
-
-        st.error("Please enter User ID and Password")
-
-    else:
-
-        existing_user = run_query(
-            """
-            SELECT *
-            FROM users
-            WHERE username = ?
-            """,
-            (username,),
-            fetch=True
+        password = st.text_input(
+            "Password",
+            type="password"
         )
 
-        if existing_user:
+        role = st.selectbox(
+            "Role",
+            [
+                "Admin",
+                "Operator",
+                "Store",
+                "Supervisor"
+            ]
+        )
 
-            st.error("❌ User Already Exists")
+        st.markdown("### Access Rights")
 
-        else:
+        dashboard_access = st.checkbox("Dashboard")
+        billing_access = st.checkbox("Billing")
+        inventory_access = st.checkbox("Inventory")
+        customers_access = st.checkbox("Customers")
+        portal_access = st.checkbox("Customer Portal")
+        users_access = st.checkbox("User Authorization")
 
-            result = run_query(
-                """
-                INSERT INTO users
-                (
-                    username,
-                    password,
-                    role,
-                    dashboard_access,
-                    billing_access,
-                    inventory_access,
-                    customers_access,
-                    portal_access,
-                    users_access
-                )
-                VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    username,
-                    password,
-                    role,
-                    int(dashboard_access),
-                    int(billing_access),
-                    int(inventory_access),
-                    int(customers_access),
-                    int(portal_access),
-                    int(users_access)
-                )
-            )
+        if st.button("✅ Create User"):
 
-            if result:
+            if not username or not password:
 
-                st.success(
-                    "✅ User Created Successfully"
-                )
-
-                st.rerun()
+                st.error("Please enter User ID and Password")
 
             else:
 
-                st.error(
-                    "❌ Failed To Create User"
+                existing_user = run_query(
+                    "SELECT * FROM users WHERE username = ?",
+                    (username,),
+                    fetch=True
                 )
 
-            except Exception as e:
+                if existing_user:
 
-                st.error(str(e))
+                    st.error("❌ User Already Exists")
+
+                else:
+
+                    result = run_query(
+                        """
+                        INSERT INTO users
+                        (
+                            username,
+                            password,
+                            role,
+                            dashboard_access,
+                            billing_access,
+                            inventory_access,
+                            customers_access,
+                            portal_access,
+                            users_access
+                        )
+                        VALUES
+                        (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            username,
+                            password,
+                            role,
+                            int(dashboard_access),
+                            int(billing_access),
+                            int(inventory_access),
+                            int(customers_access),
+                            int(portal_access),
+                            int(users_access)
+                        )
+                    )
+
+                    if result:
+
+                        st.success(
+                            "✅ User Created Successfully"
+                        )
+
+                        st.rerun()
+
+                    else:
+
+                        st.error(
+                            "❌ Failed To Create User"
+                        )
 
         st.markdown("---")
 
