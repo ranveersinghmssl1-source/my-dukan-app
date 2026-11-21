@@ -389,29 +389,57 @@ elif current_form == "customers":
     tab1, tab2 = st.tabs(["Add Customer", "Customer List"])
 
     with tab1:
+
         name = st.text_input("Customer Name")
         phone = st.text_input("Mobile Number")
 
         if st.button("Save Customer"):
+
             if name and phone:
+
                 run_query(
                     "INSERT INTO customers (name, phone) VALUES (?, ?)",
                     (name, phone)
                 )
+
                 st.success("✅ Customer Added Successfully")
+
+                st.rerun()
+
             else:
-                st.warning("Please enter Name and Mobile Number")
+
+                st.warning(
+                    "Please enter Name and Mobile Number"
+                )
 
     with tab2:
+
         customers = run_query(
             "SELECT customer_id, name, phone FROM customers",
             fetch=True
         )
 
         if customers:
+
             df = pd.DataFrame(
                 customers,
-                columns=["ID", "Name", "Phone"]
+                columns=[
+                    "ID",
+                    "Name",
+                    "Phone"
+                ]
+            )
+
+            st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True
+            )
+
+        else:
+
+            st.info(
+                "No Customers Found"
             )
          
 elif current_form == "inventory":
