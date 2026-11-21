@@ -554,3 +554,30 @@ if st.sidebar.button("📥 Download Database Backup"):
             file_name=backup_file,
             mime="application/octet-stream"
         )
+if st.sidebar.button("📊 Export Customers"):
+
+    customers = run_query(
+        "SELECT * FROM customers",
+        fetch=True
+    )
+
+    df = pd.DataFrame(
+        customers,
+        columns=["ID", "Name", "Phone"]
+    )
+
+    df.to_excel(
+        "customers_backup.xlsx",
+        index=False
+    )
+
+    with open(
+        "customers_backup.xlsx",
+        "rb"
+    ) as f:
+
+        st.download_button(
+            "📥 Download Excel Backup",
+            f,
+            "customers_backup.xlsx"
+        )
