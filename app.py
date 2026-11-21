@@ -790,7 +790,7 @@ elif current_form == "portal":
 
 elif current_form == "users":
 
-    if st.session_state.role != "Admin":
+    if st.session_state.get("role") != "Admin":
 
         st.error(
             "⛔ Only Admin Can Access This Page"
@@ -800,57 +800,117 @@ elif current_form == "users":
 
         st.subheader("👤 User Authorization")
 
-username = st.text_input("User ID")
+        username = st.text_input("User ID")
 
-password = st.text_input(
-    "Password",
-    type="password"
-)
-
-role = st.selectbox(
-    "Role",
-    ["Admin", "Operator", "Store", "Supervisor"]
-)
-
-st.markdown("### Access Rights")
-
-dashboard_access = st.checkbox("Dashboard")
-billing_access = st.checkbox("Billing")
-inventory_access = st.checkbox("Inventory")
-customers_access = st.checkbox("Customers")
-portal_access = st.checkbox("Customer Portal")
-users_access = st.checkbox("User Authorization")
-
-if st.button("✅ Create User"):
-
-    run_query(
-        """
-        INSERT INTO users
-        (
-            username,
-            password,
-            role,
-            dashboard_access,
-            billing_access,
-            inventory_access,
-            customers_access,
-            portal_access,
-            users_access
+        password = st.text_input(
+            "Password",
+            type="password"
         )
-        VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            username,
-            password,
-            role,
-            int(dashboard_access),
-            int(billing_access),
-            int(inventory_access),
-            int(customers_access),
-            int(portal_access),
-            int(users_access)
-        )
-    )
 
-    st.success("User Created Successfully")
+        role = st.selectbox(
+            "Role",
+            [
+                "Admin",
+                "Operator",
+                "Store",
+                "Supervisor"
+            ]
+        )
+
+        st.markdown("### Access Rights")
+
+        dashboard_access = st.checkbox("Dashboard")
+        billing_access = st.checkbox("Billing")
+        inventory_access = st.checkbox("Inventory")
+        customers_access = st.checkbox("Customers")
+        portal_access = st.checkbox("Customer Portal")
+        users_access = st.checkbox("User Authorization")
+
+        if st.button("✅ Create User"):
+
+            run_query(
+                """
+                INSERT INTO users
+                (
+                    username,
+                    password,
+                    role,
+                    dashboard_access,
+                    billing_access,
+                    inventory_access,
+                    customers_access,
+                    portal_access,
+                    users_access
+                )
+                VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    username,
+                    password,
+                    role,
+                    int(dashboard_access),
+                    int(billing_access),
+                    int(inventory_access),
+                    int(customers_access),
+                    int(portal_access),
+                    int(users_access)
+                )
+            )
+
+            st.success(
+                "✅ User Created Successfully"
+            )
+
+            st.rerun()
+
+        st.markdown("---")
+
+        st.subheader("📋 Existing Users")
+
+        users_data = run_query(
+            """
+            SELECT
+                user_id,
+                username,
+                role,
+                dashboard_access,
+                billing_access,
+                inventory_access,
+                customers_access,
+                portal_access,
+                users_access
+            FROM users
+            ORDER BY user_id DESC
+            """,
+            fetch=True
+        )
+
+        if users_data:
+
+            df = pd.DataFrame(
+                users_data,
+                columns=[
+                    "ID",
+                    "User Name",
+                    "Role",
+                    "Dashboard",
+                    "Billing",
+                    "Inventory",
+                    "Customers",
+                    "Portal",
+                    "Users"
+                ]
+            )
+
+            st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True
+            )
+
+        else:
+
+            st.info(
+                "No Users Found"
+            )
