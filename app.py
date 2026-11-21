@@ -80,16 +80,49 @@ CREATE TABLE IF NOT EXISTS users (
             sold_by TEXT
         )
         """)
+# Users Table
 
-        # Users Table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT,
-            role TEXT
-        )
-        """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT,
+    role TEXT,
+    dashboard_access INTEGER DEFAULT 0,
+    billing_access INTEGER DEFAULT 0,
+    inventory_access INTEGER DEFAULT 0,
+    customers_access INTEGER DEFAULT 0,
+    portal_access INTEGER DEFAULT 0,
+    users_access INTEGER DEFAULT 0
+)
+""")
+
+cursor.execute("""
+INSERT OR IGNORE INTO users
+(
+    username,
+    password,
+    role,
+    dashboard_access,
+    billing_access,
+    inventory_access,
+    customers_access,
+    portal_access,
+    users_access
+)
+VALUES
+(
+    'admin',
+    'admin123',
+    'Admin',
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+)
+""")
 
         # Default Admin User
         cursor.execute("""
