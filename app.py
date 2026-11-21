@@ -764,3 +764,133 @@ elif current_form == "portal":
             st.error(
                 "Customer Not Found"
             )
+
+# ─── USER AUTHORIZATION ───
+
+elif current_form == "users":
+
+    if st.session_state.role != "Admin":
+
+        st.error(
+            "⛔ Only Admin Can Access This Page"
+        )
+
+    else:
+
+        st.subheader("👤 User Authorization")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            with st.form("user_form"):
+
+                username = st.text_input(
+                    "👤 User ID"
+                )
+
+                password = st.text_input(
+                    "🔑 Password",
+                    type="password"
+                )
+
+                role = st.selectbox(
+                    "🎯 Role",
+                    [
+                        "Admin",
+                        "Operator",
+                        "Store",
+                        "Supervisor"
+                    ]
+                )
+
+                submit = st.form_submit_button(
+                    "✅ Create User"
+                )
+
+                if submit:
+
+                    if username and password:
+
+                        run_query(
+                            """
+                            INSERT INTO users
+                            (
+                                username,
+                                password,
+                                role
+                            )
+                            VALUES
+                            (?, ?, ?)
+                            """,
+                            (
+                                username,
+                                password,
+                                role
+                            )
+                        )
+
+                        st.success(
+                            "✅ User Created Successfully"
+                        )
+
+                        st.rerun()
+
+                    else:
+
+                        st.warning(
+                            "Please Enter User ID and Password"
+                        )
+
+        with col2:
+
+            st.info(
+                """
+                Default Admin Login
+
+                User ID : admin
+
+                Password : admin123
+                """
+            )
+
+        st.markdown("---")
+
+        st.subheader(
+            "👥 Existing Users"
+        )
+
+        users = run_query(
+            """
+            SELECT
+            user_id,
+            username,
+            role
+            FROM users
+            ORDER BY user_id DESC
+            """,
+            fetch=True
+        )
+
+        if users:
+
+            df = pd.DataFrame(
+                users,
+                columns=[
+                    "ID",
+                    "User Name",
+                    "Role"
+                ]
+            )
+
+            st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True
+            )
+
+        else:
+
+            st.info(
+                "No Users Available"
+            )
