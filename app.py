@@ -49,6 +49,14 @@ def init_db():
         conn.commit()
 
 init_db()
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS bills (
+...
+)
+''')
+
+# YAHAN ADD KARNA HAI
+
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,6 +72,8 @@ INSERT OR IGNORE INTO users
 VALUES
 ('admin','admin123','Admin')
 """)
+
+conn.commit()
 def run_query(query, params=(), fetch=False):
     with sqlite3.connect('dukan_ultimate_v1.db') as conn:
         cursor = conn.cursor()
