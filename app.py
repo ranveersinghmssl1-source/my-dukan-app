@@ -164,7 +164,7 @@ lang_choice = st.sidebar.selectbox("🌐 Choose Language / भाषा चु�
 standard_menu = ["dashboard", "billing", "inventory", "customers", "portal"]
 
 if lang_choice == "Hindi":
-    display_menu = ["📊 डैशबोर्ड", "🛒 बिलिंग काउंटर", "📦 स्टॉक गोदाम (Inventory)", "👥 ग्राहक खाता (Customers)", "🔐 ग्राहक लॉगिन पोर्टल"]
+    "👤 User Authorization",display_menu = ["📊 डैशबोर्ड", "🛒 बिलिंग काउंटर", "📦 स्टॉक गोदाम (Inventory)", "👥 ग्राहक खाता (Customers)", "🔐 ग्राहक लॉगिन पोर्टल"]
     _title = "🏬 मेरी दुकान PRO - डिजिटल स्टोर मैनेजमेंट"
 else:
     display_menu = ["📊 Dashboard", "🛒 Billing Form", "📦 Inventory (Stock)", "👥 Customers Management", "🔐 Customer Login Portal"]
