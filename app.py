@@ -853,43 +853,49 @@ elif current_form == "users":
 
         if st.button("✅ Create User"):
 
-            try:
+    st.write("Button Clicked")
 
-                run_query(
-                    """
-                    INSERT INTO users
-                    (
-                        username,
-                        password,
-                        role,
-                        dashboard_access,
-                        billing_access,
-                        inventory_access,
-                        customers_access,
-                        portal_access,
-                        users_access
-                    )
-                    VALUES
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        username,
-                        password,
-                        role,
-                        int(dashboard_access),
-                        int(billing_access),
-                        int(inventory_access),
-                        int(customers_access),
-                        int(portal_access),
-                        int(users_access)
-                    )
-                )
+    result = run_query(
+        """
+        INSERT INTO users
+        (
+            username,
+            password,
+            role,
+            dashboard_access,
+            billing_access,
+            inventory_access,
+            customers_access,
+            portal_access,
+            users_access
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            username,
+            password,
+            role,
+            int(dashboard_access),
+            int(billing_access),
+            int(inventory_access),
+            int(customers_access),
+            int(portal_access),
+            int(users_access)
+        )
+    )
 
-                st.success(
-                    "✅ User Created Successfully"
-                )
+    st.write("Result =", result)
 
-                st.rerun()
+    users_check = run_query(
+        "SELECT * FROM users",
+        fetch=True
+    )
+
+    st.write(users_check)
+
+    if result:
+        st.success("✅ User Created Successfully")
+        st.rerun()
 
             except Exception as e:
 
