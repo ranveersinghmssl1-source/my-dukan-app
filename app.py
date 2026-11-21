@@ -914,3 +914,84 @@ elif current_form == "users":
             st.info(
                 "No Users Found"
             )
+            st.markdown("---")
+st.subheader("✏️ Edit / Delete User")
+
+users_list = run_query(
+    """
+    SELECT
+        user_id,
+        username,
+        role
+    FROM users
+    ORDER BY user_id
+    """,
+    fetch=True
+)
+
+if users_list:
+
+    user_options = {
+        f"{u[1]} ({u[2]})": u[0]
+        for u in users_list
+    }
+
+    selected_user = st.selectbox(
+        "Select User",
+        list(user_options.keys())
+    )
+
+    selected_user_id = user_options[selected_user]
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+
+        if st.button("🗑️ Delete User"):
+
+            run_query(
+                """
+                DELETE FROM users
+                WHERE user_id = ?
+                """,
+                (selected_user_id,)
+            )
+
+            st.success(
+                "✅ User Deleted Successfully"
+            )
+
+            st.rerun()
+
+    with c2:
+
+        new_role = st.selectbox(
+            "Change Role",
+            [
+                "Admin",
+                "Operator",
+                "Store",
+                "Supervisor"
+            ],
+            key="edit_role"
+        )
+
+        if st.button("✏️ Update Role"):
+
+            run_query(
+                """
+                UPDATE users
+                SET role = ?
+                WHERE user_id = ?
+                """,
+                (
+                    new_role,
+                    selected_user_id
+                )
+            )
+
+            st.success(
+                "✅ Role Updated Successfully"
+            )
+
+            st.rerun()
