@@ -643,3 +643,42 @@ elif current_form == "inventory":
     st.markdown("---")
 
     st.markdown("### 📋 Product Inventory")
+elif current_form == "portal":
+
+    st.subheader("🔐 Customer Portal")
+
+    st.info(
+        "Customer Portal Under Development"
+    )
+
+    st.markdown("### Customer Login")
+
+    mobile = st.text_input(
+        "Mobile Number"
+    )
+
+    if st.button("Login"):
+
+        customer = run_query(
+            """
+            SELECT
+            name,
+            phone
+            FROM customers
+            WHERE phone = ?
+            """,
+            (mobile,),
+            fetch=True
+        )
+
+        if customer:
+
+            st.success(
+                f"Welcome {customer[0][0]}"
+            )
+
+        else:
+
+            st.error(
+                "Customer Not Found"
+            )
