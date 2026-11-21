@@ -198,6 +198,69 @@ if st.sidebar.button("🚪 Logout"):
 st.title(_title)
 st.markdown("---")
 
+elif current_form == "users":
+
+    if st.session_state.role != "Admin":
+
+        st.error(
+            "Only Admin Can Access This Page"
+        )
+
+    else:
+
+        st.subheader(
+            "👤 User Authorization"
+        )
+
+        with st.form("user_form"):
+
+            username = st.text_input(
+                "User ID"
+            )
+
+            password = st.text_input(
+                "Password",
+                type="password"
+            )
+
+            role = st.selectbox(
+                "Role",
+                [
+                    "Admin",
+                    "Operator",
+                    "Store",
+                    "Supervisor"
+                ]
+            )
+
+            submit = st.form_submit_button(
+                "✅ Create User"
+            )
+
+            if submit:
+
+                run_query(
+                    """
+                    INSERT INTO users
+                    (
+                        username,
+                        password,
+                        role
+                    )
+                    VALUES
+                    (?, ?, ?)
+                    """,
+                    (
+                        username,
+                        password,
+                        role
+                    )
+                )
+
+                st.success(
+                    "User Created Successfully"
+                )
+
 # ─── 1. DASHBOARD SCREEN ───
 if current_form == "dashboard":
     if lang_choice == "Hindi":
