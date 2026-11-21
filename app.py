@@ -73,11 +73,11 @@ if not st.session_state.logged_in:
     st.title("🔐 My Dukan PRO Login")
 
     username = st.text_input(
-        "User Name"
+        "admin"
     )
 
     password = st.text_input(
-        "Password",
+        "1234",
         type="password"
     )
 
