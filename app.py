@@ -49,7 +49,21 @@ def init_db():
         conn.commit()
 
 init_db()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT,
+    role TEXT
+)
+""")
 
+cursor.execute("""
+INSERT OR IGNORE INTO users
+(username,password,role)
+VALUES
+('admin','admin123','Admin')
+""")
 def run_query(query, params=(), fetch=False):
     with sqlite3.connect('dukan_ultimate_v1.db') as conn:
         cursor = conn.cursor()
@@ -600,19 +614,3 @@ elif current_form == "inventory":
     st.markdown("---")
 
     st.markdown("### 📋 Product Inventory")
-
-    cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password TEXT,
-    role TEXT
-)
-""")
-
-cursor.execute("""
-INSERT OR IGNORE INTO users
-(username,password,role)
-VALUES
-('admin','admin123','Admin')
-""")
