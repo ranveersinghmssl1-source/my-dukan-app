@@ -114,13 +114,13 @@ if current_form == "dashboard":
         st.info("No transactions recorded yet.")
     
 
-# ─── BILLING SCREEN ───
+# ─── BILLING SCREEN MULTIPLE PRODUCTS ───
 
 elif current_form == "billing":
 
     st.subheader("🛒 Fast Billing Counter")
 
-    # Session Cart
+    # Cart Session
     if "cart" not in st.session_state:
         st.session_state.cart = []
 
@@ -131,17 +131,18 @@ elif current_form == "billing":
         fetch=True
     )
 
-    cust_options = ["Walk-in Customer"]
+    customer_options = ["Walk-in Customer"]
 
     if cust_list:
-        cust_options += [
+
+        customer_options += [
             f"{c[0]} ({c[1]})"
             for c in cust_list
         ]
 
     selected_customer = st.selectbox(
-        "👤 Customer",
-        cust_options
+        "👤 Select Customer",
+        customer_options
     )
 
     if "(" in selected_customer:
@@ -158,7 +159,7 @@ elif current_form == "billing":
 
     st.markdown("---")
 
-    # Product List
+    # Product Loading
 
     products = run_query(
         """
@@ -177,9 +178,7 @@ elif current_form == "billing":
 
     if not products:
 
-        st.warning(
-            "⚠️ Inventory Empty. Please Add Products."
-        )
+        st.warning("⚠️ No Products Available")
 
     else:
 
@@ -205,33 +204,27 @@ elif current_form == "billing":
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.metric(
-                "Price",
-                f"₹{price:,.2f}"
-            )
+            st.metric("💰 Price", f"₹{price:,.2f}")
 
         with col2:
-            st.metric(
-                "Stock",
-                f"{stock} {unit_type}"
-            )
+            st.metric("📊 Stock", f"{stock} {unit_type}")
 
         with col3:
-            st.metric(
-                "Unit",
-                unit_type
-            )
+            st.metric("📦 Product", p_name)
 
         qty = st.number_input(
             "Quantity",
             min_value=1,
             max_value=int(stock),
-            value=1
+            value=1,
+            key=f"qty_{p_id}"
         )
+
+        # Add Product
 
         if st.button("➕ Add To Bill"):
 
-            item_exists = False
+            found = False
 
             for item in st.session_state.cart:
 
@@ -239,14 +232,13 @@ elif current_form == "billing":
 
                     item["qty"] += qty
                     item["total"] = (
-                        item["qty"]
-                        * item["price"]
+                        item["qty"] * item["price"]
                     )
 
-                    item_exists = True
+                    found = True
                     break
 
-            if not item_exists:
+            if not found:
 
                 st.session_state.cart.append(
                     {
@@ -261,12 +253,12 @@ elif current_form == "billing":
                 )
 
             st.success(
-                f"{p_name} Added To Bill"
+                f"✅ {p_name} Added To Bill"
             )
 
             st.rerun()
 
-    # Cart Items
+    # Show Cart
 
     st.markdown("---")
     st.subheader("🧾 Current Bill")
@@ -278,7 +270,16 @@ elif current_form == "billing":
         )
 
         st.dataframe(
-            cart_df,
+            cart_df[
+                [
+                    "barcode",
+                    "name",
+                    "price",
+                    "qty",
+                    "unit",
+                    "total"
+                ]
+            ],
             use_container_width=True,
             hide_index=True
         )
@@ -294,11 +295,10 @@ elif current_form == "billing":
             background:#16a34a;
             padding:20px;
             border-radius:15px;
-            text-align:center;
             color:white;
-            ">
-                <h2>Grand Total</h2>
-                <h1>₹ {grand_total:,.2f}</h1>
+            text-align:center;">
+            <h2>GRAND TOTAL</h2>
+            <h1>₹ {grand_total:,.2f}</h1>
             </div>
             """,
             unsafe_allow_html=True
@@ -306,26 +306,23 @@ elif current_form == "billing":
 
         pay_mode = st.radio(
             "💳 Payment Mode",
-            [
-                "Cash",
-                "Udhaar (Balance)"
-            ],
+            ["Cash", "Udhaar (Balance)"],
             horizontal=True
         )
 
-        col1, col2 = st.columns(2)
+        c1, c2 = st.columns(2)
 
-        with col1:
+        with c1:
 
             if st.button(
-                "🗑️ Clear Bill",
+                "🗑️ Clear",
                 use_container_width=True
             ):
 
                 st.session_state.cart = []
                 st.rerun()
 
-        with col2:
+        with c2:
 
             if st.button(
                 "🖨️ Generate Final Bill",
@@ -335,7 +332,7 @@ elif current_form == "billing":
 
                 # Save Bill
 
-           run_query(
+                run_query(
                     """
                     INSERT INTO bills
                     (
