@@ -112,6 +112,31 @@ if current_form == "dashboard":
         st.dataframe(df, use_container_width=True)
     else:
         st.info("No transactions recorded yet.")
+        monthly_sales = run_query(
+    """
+    SELECT
+        strftime('%Y-%m', bill_date) as Month,
+        SUM(total_amount) as Sales
+    FROM bills
+    GROUP BY Month
+    ORDER BY Month DESC
+    LIMIT 2
+    """,
+    fetch=True
+)
+
+if monthly_sales:
+
+    df_month = pd.DataFrame(
+        monthly_sales,
+        columns=["Month", "Sales"]
+    )
+
+    st.dataframe(df_month, use_container_width=True)
+
+    st.bar_chart(
+        df_month.set_index("Month")
+    )
 
 # ─── 2. BILLING SCREEN (PROFESSIONAL VERSION) ───
 elif current_form == "billing":
