@@ -24,68 +24,73 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ─── DATABASE INITIALIZATION ───
+
 def init_db():
-    with sqlite3.connect('dukan_ultimate_v1.db') as conn:
+
+    with sqlite3.connect("dukan_ultimate_v1.db") as conn:
+
         cursor = conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS customers (
-                            customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            name TEXT NOT NULL, phone TEXT UNIQUE NOT NULL)''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS products (
-                            product_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            barcode TEXT UNIQUE,
-                            name TEXT NOT NULL, 
-                            supplier TEXT,
-                            unit_type TEXT,
-                            weight_kg REAL,
-                            price REAL NOT NULL, 
-                            stock INTEGER NOT NULL)''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS bills (
-                            bill_no INTEGER PRIMARY KEY AUTOINCREMENT,
-                            customer_name TEXT, 
-                            customer_phone TEXT,
-                            total_amount REAL, 
-                            payment_mode TEXT,
-                            bill_date TEXT)''')
+
+        # Customers Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS customers (
+            customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            phone TEXT UNIQUE NOT NULL
+        )
+        """)
+
+        # Products Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            barcode TEXT UNIQUE,
+            name TEXT NOT NULL,
+            supplier TEXT,
+            unit_type TEXT,
+            weight_kg REAL,
+            price REAL NOT NULL,
+            stock INTEGER NOT NULL
+        )
+        """)
+
+        # Bills Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bills (
+            bill_no INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_name TEXT,
+            customer_phone TEXT,
+            total_amount REAL,
+            payment_mode TEXT,
+            bill_date TEXT,
+            sold_by TEXT
+        )
+        """)
+
+        # Users Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT
+        )
+        """)
+
+        # Default Admin User
+        cursor.execute("""
+        INSERT OR IGNORE INTO users
+        (username, password, role)
+        VALUES
+        ('admin', 'admin123', 'Admin')
+        """)
+
         conn.commit()
 
+
+# Initialize Database
+
 init_db()
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS bills (
-...
-)
-''')
-
-# YAHAN ADD KARNA HAI
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password TEXT,
-    role TEXT
-)
-""")
-
-cursor.execute("""
-INSERT OR IGNORE INTO users
-(username,password,role)
-VALUES
-('admin','admin123','Admin')
-""")
-
-conn.commit()
-def run_query(query, params=(), fetch=False):
-    with sqlite3.connect('dukan_ultimate_v1.db') as conn:
-        cursor = conn.cursor()
-        try:
-            cursor.execute(query, params)
-            if fetch:
-                return cursor.fetchall()
-            conn.commit()
-            return None
-        except Exception as e:
-            st.error(f"⚠️ Database Error: {e}")
-            return None
             
 # ─── LOGIN SYSTEM ───
 
