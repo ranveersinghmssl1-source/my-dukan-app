@@ -114,102 +114,54 @@ if current_form == "dashboard":
         st.info("No transactions recorded yet.")
     
 
-# ─── 2. BILLING SCREEN (PROFESSIONAL VERSION) ───
+# ─── BILLING SCREEN ───
+
 elif current_form == "billing":
 
-    st.subheader(
-        "🛒 Fast Billing Counter"
-        if lang_choice == "English"
-        else "🛒 फ़ास्ट बिलिंग काउंटर"
-    )
+    st.subheader("🛒 Fast Billing Counter")
 
-    # CUSTOMER SELECTION
+    # Customer List
 
     cust_list = run_query(
         "SELECT name, phone FROM customers",
         fetch=True
     )
 
-    cust_options = (
-        [f"{c[0]} ({c[1]})" for c in cust_list]
-        if cust_list
-        else []
-    )
+    cust_options = ["Walk-in Customer"]
 
-    cust_options.insert(
-        0,
-        "Walk-in Customer"
-        if lang_choice == "English"
-        else "नया ग्राहक"
-    )
+    if cust_list:
+        cust_options += [
+            f"{c[0]} ({c[1]})"
+            for c in cust_list
+        ]
 
-    selected_cust_info = st.selectbox(
-        "Customer / ग्राहक चुनें",
+    selected_customer = st.selectbox(
+        "👤 Select Customer",
         cust_options
     )
 
-    if "(" in selected_cust_info:
-
-        parts = selected_cust_info.split(" (")
-
+    if "(" in selected_customer:
+        parts = selected_customer.split(" (")
         c_name = parts[0]
         c_phone = parts[1].replace(")", "")
-
     else:
-
         c_name = "Walk-in"
         c_phone = "0000000000"
 
     st.markdown("---")
 
-    # BARCODE SCANNER
+    # Load Products
 
-    barcode_input = st.text_input(
-        "🔍 Scan Barcode",
-        key="bill_barcode"
-    ).strip()
-
-    if barcode_input:
-
-        res = run_query(
-            """
-            SELECT
+    prod_list = run_query(
+        """
+        SELECT
             product_id,
+            barcode,
             name,
             price,
             stock,
             unit_type,
             weight_kg
-            FROM products
-            WHERE barcode = ?
-            """,
-            (barcode_input,),
-            fetch=True
-        )
-
-        if res:
-
-            st.session_state.active_prod = res[0]
-
-        else:
-
-            st.session_state.active_prod = None
-
-            st.error(
-                "❌ Barcode Not Found"
-            )
-
-    # PRODUCT LIST
-
-    prod_list = run_query(
-        """
-        SELECT
-        product_id,
-        name,
-        price,
-        stock,
-        unit_type,
-        weight_kg
         FROM products
         WHERE stock > 0
         """,
@@ -224,163 +176,135 @@ elif current_form == "billing":
 
     else:
 
-        if (
-            "active_prod" not in st.session_state
-            or st.session_state.active_prod is None
-        ):
+        # Product Dropdown
 
-            prod_dict = {
-                pp
-                for p in prod_list
-            }
+        prod_dict = {
+            p[2]: p
+            for p in prod_list
+        }
 
-            search_prod = st.selectbox(
-                "Search Product",
-                list(prod_dict.keys())
+        selected_product = st.selectbox(
+            "📦 Select Product",
+            list(prod_dict.keys())
+        )
+
+        (
+            p_id,
+            barcode,
+            p_name,
+            current_price,
+            available_stock,
+            u_type,
+            w_kg
+        ) = prod_dict[selected_product]
+
+        # Product Cards
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric(
+                "📦 Product",
+                p_name
             )
 
-            st.session_state.active_prod = (
-                prod_dict[search_prod]
+        with col2:
+            st.metric(
+                "💰 Price",
+                f"₹{current_price:,.2f}"
             )
 
-        if st.session_state.active_prod:
-
-            (
-                p_id,
-                p_name,
-                current_price,
-                available_stock,
-                u_type,
-                w_kg
-            ) = st.session_state.active_prod
-
-            # PRODUCT CARDS
-
-            c1, c2, c3 = st.columns(3)
-
-            with c1:
-                st.metric(
-                    "📦 Product",
-                    p_name
-                )
-
-            with c2:
-                st.metric(
-                    "💰 Price",
-                    f"₹{current_price}"
-                )
-
-            with c3:
-                st.metric(
-                    "📊 Stock",
-                    f"{available_stock} {u_type}"
-                )
-
-            qty = st.number_input(
-                "Quantity",
-                min_value=1,
-                max_value=max(
-                    1,
-                    int(available_stock)
-                ),
-                value=1
+        with col3:
+            st.metric(
+                "📊 Stock",
+                f"{available_stock} {u_type}"
             )
 
-            total_price = qty * current_price
+        qty = st.number_input(
+            "Quantity",
+            min_value=1,
+            max_value=int(available_stock),
+            value=1
+        )
 
-            # GRAND TOTAL CARD
+        total_price = qty * current_price
 
-            st.markdown(
-                f"""
-                <div style="
-                background:#16a34a;
-                padding:20px;
-                border-radius:12px;
-                text-align:center;
-                color:white;
-                margin-top:10px;">
-                <h3>Grand Total</h3>
-                <h1>₹{total_price:,.2f}</h1>
-                </div>
+        # Total Box
+
+        st.markdown(
+            f"""
+            <div style="
+            background:#16a34a;
+            padding:20px;
+            border-radius:12px;
+            color:white;
+            text-align:center;
+            ">
+            <h3>Grand Total</h3>
+            <h1>₹ {total_price:,.2f}</h1>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        pay_mode = st.radio(
+            "💳 Payment Mode",
+            ["Cash", "Udhaar (Balance)"],
+            horizontal=True
+        )
+
+        bill_btn = st.button(
+            "🖨️ Generate Bill",
+            type="primary"
+        )
+
+        if bill_btn:
+
+            # Update Stock
+
+            run_query(
+                """
+                UPDATE products
+                SET stock = ?
+                WHERE product_id = ?
                 """,
-                unsafe_allow_html=True
+                (
+                    available_stock - qty,
+                    p_id
+                )
             )
 
-            pay_mode = st.radio(
-                "Payment Mode",
-                [
-                    "Cash",
-                    "Udhaar (Balance)"
-                ],
-                horizontal=True
+            # Save Bill
+
+            run_query(
+                """
+                INSERT INTO bills
+                (
+                    customer_name,
+                    customer_phone,
+                    total_amount,
+                    payment_mode,
+                    bill_date
+                )
+                VALUES
+                (?, ?, ?, ?, ?)
+                """,
+                (
+                    c_name,
+                    c_phone,
+                    total_price,
+                    pay_mode,
+                    datetime.now().strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                )
             )
 
-            disabled_btn = (
-                pay_mode == "Udhaar (Balance)"
-                and c_name == "Walk-in"
+            st.success(
+                f"✅ Bill Generated Successfully | Total ₹{total_price:,.2f}"
             )
 
-            if disabled_btn:
-
-                st.warning(
-                    "⚠️ Walk-in customer cannot use Udhaar"
-                )
-
-            if st.button(
-                "🖨️ Generate Bill",
-                disabled=disabled_btn,
-                type="primary"
-            ):
-
-                # UPDATE STOCK
-
-                run_query(
-                    """
-                    UPDATE products
-                    SET stock = ?
-                    WHERE product_id = ?
-                    """,
-                    (
-                        available_stock - qty,
-                        p_id
-                    )
-                )
-
-                # SAVE BILL
-
-                run_query(
-                    """
-                    INSERT INTO bills
-                    (
-                        customer_name,
-                        customer_phone,
-                        total_amount,
-                        payment_mode,
-                        bill_date
-                    )
-                    VALUES
-                    (?, ?, ?, ?, ?)
-                    """,
-                    (
-                        c_name,
-                        c_phone,
-                        total_price,
-                        pay_mode,
-                        datetime.now().strftime(
-                            "%Y-%m-%d %H:%M:%S"
-                        )
-                    )
-                )
-
-                st.success(
-                    "🎉 Bill Generated Successfully!"
-                )
-
-                st.session_state.active_prod = None
-
-                st.balloons()
-
-                st.rerun()
+            st.balloons           st.rerun()
 
 elif current_form == "customers":
 
