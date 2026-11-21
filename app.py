@@ -69,19 +69,19 @@ CREATE TABLE IF NOT EXISTS users (
         """)
 
         # Bills Table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS bills (
-            bill_no INTEGER PRIMARY KEY AUTOINCREMENT,
-            customer_name TEXT,
-            customer_phone TEXT,
-            total_amount REAL,
-            payment_mode TEXT,
-            bill_date TEXT,
-            sold_by TEXT
-        )
-        """)
-# Users Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS bills (
+    bill_no INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_name TEXT,
+    customer_phone TEXT,
+    total_amount REAL,
+    payment_mode TEXT,
+    bill_date TEXT,
+    sold_by TEXT
+)
+""")
 
+# Users Table
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
+# Default Admin User
 cursor.execute("""
 INSERT OR IGNORE INTO users
 (
@@ -124,15 +125,7 @@ VALUES
 )
 """)
 
-        # Default Admin User
-        cursor.execute("""
-        INSERT OR IGNORE INTO users
-        (username, password, role)
-        VALUES
-        ('admin', 'admin123', 'Admin')
-        """)
-
-        conn.commit()
+conn.commit()
 
 
 # Initialize Database
