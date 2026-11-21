@@ -73,11 +73,11 @@ if not st.session_state.logged_in:
     st.title("🔐 My Dukan PRO Login")
 
     username = st.text_input(
-        "admin"
+        "USER ID"
     )
 
     password = st.text_input(
-        "1234",
+        "PASSWORD",
         type="password"
     )
 
@@ -115,7 +115,27 @@ if not st.session_state.logged_in:
             )
 
     st.stop()
+st.sidebar.markdown("---")
 
+st.sidebar.success(
+    f"👤 {st.session_state.username}"
+)
+
+if st.sidebar.button("🚪 Logout"):
+
+    st.session_state.logged_in = False
+
+    st.session_state.pop(
+        "username",
+        None
+    )
+
+    st.session_state.pop(
+        "role",
+        None
+    )
+
+    st.rerun()
 # ─── LANGUAGE SELECTION ───
 lang_choice = st.sidebar.selectbox("🌐 Choose Language / भाषा चुनें", ["English", "Hindi"])
 standard_menu = ["dashboard", "billing", "inventory", "customers", "portal"]
