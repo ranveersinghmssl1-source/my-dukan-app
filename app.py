@@ -91,8 +91,30 @@ def init_db():
 # Initialize Database
 
 init_db()
-            
-# ─── LOGIN SYSTEM ───
+
+def run_query(query, params=(), fetch=False):
+
+    with sqlite3.connect("dukan_ultimate_v1.db") as conn:
+
+        cursor = conn.cursor()
+
+        try:
+
+            cursor.execute(query, params)
+
+            if fetch:
+                return cursor.fetchall()
+
+            conn.commit()
+
+        except Exception as e:
+
+            st.error(f"Database Error: {e}")
+
+            return None
+
+
+# LOGIN SYSTEM YAHA SE START HOGA
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -101,19 +123,14 @@ if not st.session_state.logged_in:
 
     st.title("🔐 My Dukan PRO Login")
 
-    username = st.text_input(
-        "USER ID"
-    )
+    username = st.text_input("USER ID")
 
     password = st.text_input(
         "PASSWORD",
         type="password"
     )
 
-    if st.button(
-        "Login",
-        type="primary"
-    ):
+    if st.button("Login"):
 
         user = run_query(
             """
@@ -122,10 +139,7 @@ if not st.session_state.logged_in:
             WHERE username = ?
             AND password = ?
             """,
-            (
-                username,
-                password
-            ),
+            (username, password),
             fetch=True
         )
 
@@ -140,7 +154,7 @@ if not st.session_state.logged_in:
         else:
 
             st.error(
-                "❌ Invalid Username or Password"
+                "Invalid Username / Password"
             )
 
     st.stop()
