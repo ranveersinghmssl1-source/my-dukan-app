@@ -39,6 +39,20 @@ def init_db():
             phone TEXT UNIQUE NOT NULL
         )
         """)
+        cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT,
+    role TEXT,
+    dashboard_access INTEGER DEFAULT 0,
+    billing_access INTEGER DEFAULT 0,
+    inventory_access INTEGER DEFAULT 0,
+    customers_access INTEGER DEFAULT 0,
+    portal_access INTEGER DEFAULT 0,
+    users_access INTEGER DEFAULT 0
+)
+""")
 
         # Products Table
         cursor.execute("""
@@ -786,118 +800,57 @@ elif current_form == "users":
 
         st.subheader("👤 User Authorization")
 
-        col1, col2 = st.columns(2)
+username = st.text_input("User ID")
 
-        with col1:
+password = st.text_input(
+    "Password",
+    type="password"
+)
 
-            with st.form("user_form"):
+role = st.selectbox(
+    "Role",
+    ["Admin", "Operator", "Store", "Supervisor"]
+)
 
-                username = st.text_input(
-                    "👤 User ID"
-                )
+st.markdown("### Access Rights")
 
-                password = st.text_input(
-                    "🔑 Password",
-                    type="password"
-                )
+dashboard_access = st.checkbox("Dashboard")
+billing_access = st.checkbox("Billing")
+inventory_access = st.checkbox("Inventory")
+customers_access = st.checkbox("Customers")
+portal_access = st.checkbox("Customer Portal")
+users_access = st.checkbox("User Authorization")
 
-                role = st.selectbox(
-                    "🎯 Role",
-                    [
-                        "Admin",
-                        "Operator",
-                        "Store",
-                        "Supervisor"
-                    ]
-                )
+if st.button("✅ Create User"):
 
-                submit = st.form_submit_button(
-                    "✅ Create User"
-                )
-
-                if submit:
-
-                    if username and password:
-
-                        run_query(
-                            """
-                            INSERT INTO users
-                            (
-                                username,
-                                password,
-                                role
-                            )
-                            VALUES
-                            (?, ?, ?)
-                            """,
-                            (
-                                username,
-                                password,
-                                role
-                            )
-                        )
-
-                        st.success(
-                            "✅ User Created Successfully"
-                        )
-
-                        st.rerun()
-
-                    else:
-
-                        st.warning(
-                            "Please Enter User ID and Password"
-                        )
-
-        with col2:
-
-            st.info(
-                """
-                Default Admin Login
-
-                User ID : admin
-
-                Password : admin123
-                """
-            )
-
-        st.markdown("---")
-
-        st.subheader(
-            "👥 Existing Users"
-        )
-
-        users = run_query(
-            """
-            SELECT
-            user_id,
+    run_query(
+        """
+        INSERT INTO users
+        (
             username,
-            role
-            FROM users
-            ORDER BY user_id DESC
-            """,
-            fetch=True
+            password,
+            role,
+            dashboard_access,
+            billing_access,
+            inventory_access,
+            customers_access,
+            portal_access,
+            users_access
         )
+        VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            username,
+            password,
+            role,
+            int(dashboard_access),
+            int(billing_access),
+            int(inventory_access),
+            int(customers_access),
+            int(portal_access),
+            int(users_access)
+        )
+    )
 
-        if users:
-
-            df = pd.DataFrame(
-                users,
-                columns=[
-                    "ID",
-                    "User Name",
-                    "Role"
-                ]
-            )
-
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=True
-            )
-
-        else:
-
-            st.info(
-                "No Users Available"
-            )
+    st.success("User Created Successfully")
